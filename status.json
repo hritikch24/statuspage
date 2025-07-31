@@ -8,10 +8,10 @@
         "description": "All Systems Operational"
       },
       "communityStatus": {
-        "status": "unknown",
-        "description": "Community data unavailable"
+        "status": "operational",
+        "description": "Community status unavailable"
       },
-      "lastChecked": "2025-07-31T07:54:51.785Z"
+      "lastChecked": "2025-07-31T07:58:36.788Z"
     },
     {
       "name": "cloudflare",
@@ -21,23 +21,23 @@
         "description": "Minor Service Outage"
       },
       "communityStatus": {
-        "status": "unknown",
-        "description": "Community data unavailable"
+        "status": "operational",
+        "description": "Community status unavailable"
       },
-      "lastChecked": "2025-07-31T07:54:51.817Z"
+      "lastChecked": "2025-07-31T07:58:36.668Z"
     },
     {
       "name": "nylas",
       "displayName": "Nylas",
       "officialStatus": {
         "status": "degraded",
-        "description": "Reopened incident - ongoing issues"
+        "description": "Active service issues detected"
       },
       "communityStatus": {
-        "status": "unknown",
-        "description": "Community data unavailable"
+        "status": "operational",
+        "description": "Community status unavailable"
       },
-      "lastChecked": "2025-07-31T07:54:52.346Z"
+      "lastChecked": "2025-07-31T07:58:36.790Z"
     },
     {
       "name": "sendgrid",
@@ -47,10 +47,10 @@
         "description": "All Systems Operational"
       },
       "communityStatus": {
-        "status": "unknown",
-        "description": "Community data unavailable"
+        "status": "operational",
+        "description": "Community status unavailable"
       },
-      "lastChecked": "2025-07-31T07:54:51.902Z"
+      "lastChecked": "2025-07-31T07:58:36.799Z"
     },
     {
       "name": "twilio",
@@ -60,23 +60,23 @@
         "description": "Partially Degraded Service"
       },
       "communityStatus": {
-        "status": "unknown",
-        "description": "Community data unavailable"
+        "status": "operational",
+        "description": "Community status unavailable"
       },
-      "lastChecked": "2025-07-31T07:54:52.031Z"
+      "lastChecked": "2025-07-31T07:58:36.660Z"
     },
     {
       "name": "postmark",
       "displayName": "Postmark",
       "officialStatus": {
-        "status": "unknown",
-        "description": "API unavailable"
+        "status": "degraded",
+        "description": "Service partially affected"
       },
       "communityStatus": {
-        "status": "unknown",
-        "description": "Community data unavailable"
+        "status": "operational",
+        "description": "Community status unavailable"
       },
-      "lastChecked": "2025-07-31T07:54:51.981Z"
+      "lastChecked": "2025-07-31T07:58:37.149Z"
     },
     {
       "name": "zohomail",
@@ -86,10 +86,10 @@
         "description": "Official page unavailable"
       },
       "communityStatus": {
-        "status": "unknown",
-        "description": "Community data unavailable"
+        "status": "operational",
+        "description": "Community status unavailable"
       },
-      "lastChecked": "2025-07-31T07:54:52.042Z"
+      "lastChecked": "2025-07-31T07:58:36.788Z"
     },
     {
       "name": "mailgun",
@@ -99,12 +99,12 @@
         "description": "All Systems Operational"
       },
       "communityStatus": {
-        "status": "unknown",
-        "description": "Community data unavailable"
+        "status": "operational",
+        "description": "Community status unavailable"
       },
-      "lastChecked": "2025-07-31T07:54:52.348Z"
+      "lastChecked": "2025-07-31T07:58:36.757Z"
     }
   ],
-  "lastUpdated": "2025-07-31T07:54:52.348Z",
+  "lastUpdated": "2025-07-31T07:58:37.149Z",
   "overallStatus": "degraded"
 }
