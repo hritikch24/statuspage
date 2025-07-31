@@ -99,6 +99,11 @@
             color: #742a2a;
         }
 
+        .status-unknown {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
         .status-loading {
             background: #e2e8f0;
             color: #4a5568;
@@ -114,6 +119,13 @@
             color: #718096;
             margin-bottom: 16px;
             line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .service-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .service-link {
@@ -122,6 +134,7 @@
             color: #4299e1;
             text-decoration: none;
             font-weight: 500;
+            font-size: 0.9rem;
             transition: color 0.2s ease;
         }
 
@@ -132,14 +145,13 @@
         .service-link::after {
             content: '↗';
             margin-left: 4px;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
 
-        .last-updated {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
-            margin-top: 20px;
+        .last-checked {
+            font-size: 0.8rem;
+            color: #a0aec0;
+            margin-top: 8px;
         }
 
         .overall-status {
@@ -159,6 +171,33 @@
             color: #2d3748;
         }
 
+        .status-footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+
+        .github-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.2s ease;
+        }
+
+        .github-link:hover {
+            opacity: 0.8;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2rem;
@@ -174,211 +213,194 @@
     <div class="container">
         <div class="header">
             <h1>Service Status Dashboard</h1>
-            <p>Monitor the health of your critical third-party services</p>
+            <p>Real-time monitoring of critical third-party services</p>
         </div>
 
         <div class="overall-status">
-            <h2 id="overall-status-text">Checking system status...</h2>
+            <h2 id="overall-status-text">Loading system status...</h2>
         </div>
 
-        <div class="services-grid">
-            <div class="service-card">
-                <div class="service-header">
-                    <h3 class="service-name">Confluent Cloud</h3>
-                    <span class="status-indicator status-loading" id="confluent-status">Loading...</span>
-                </div>
-                <p class="service-description">Apache Kafka cloud service for real-time data streaming</p>
-                <a href="https://status.confluent.cloud/" target="_blank" class="service-link">View Status Page</a>
-            </div>
+        <div id="error-container"></div>
 
-            <div class="service-card">
-                <div class="service-header">
-                    <h3 class="service-name">Cloudflare</h3>
-                    <span class="status-indicator status-loading" id="cloudflare-status">Loading...</span>
-                </div>
-                <p class="service-description">Web performance and security platform</p>
-                <a href="https://www.cloudflarestatus.com/" target="_blank" class="service-link">View Status Page</a>
-            </div>
-
-            <div class="service-card">
-                <div class="service-header">
-                    <h3 class="service-name">Nylas</h3>
-                    <span class="status-indicator status-loading" id="nylas-status">Loading...</span>
-                </div>
-                <p class="service-description">Email, calendar, and contacts API platform</p>
-                <a href="https://status-v3.nylas.com/" target="_blank" class="service-link">View Status Page</a>
-            </div>
+        <div class="services-grid" id="services-container">
+            <!-- Services will be populated by JavaScript -->
         </div>
 
-        <div class="last-updated">
-            Last updated: <span id="last-updated-time">Never</span><br>
-            <small style="opacity: 0.7; margin-top: 8px; display: block;">
-                ⚠️ Status detection is best-effort. For critical issues, always check the official status pages.
-            </small>
+        <div class="status-footer">
+            <div>
+                Status updated every 5 minutes via 
+                <a href="https://github.com/yourusername/your-repo/actions" target="_blank" class="github-link">GitHub Actions</a>
+            </div>
+            <div style="margin-top: 8px;">
+                Last updated: <span id="last-updated-time">Never</span>
+            </div>
         </div>
     </div>
 
     <script>
-        // Service configurations with correct API endpoints
-        const services = [
-            {
-                name: 'confluent',
+        // Service configurations for fallback display
+        const serviceConfigs = {
+            confluent: {
                 displayName: 'Confluent Cloud',
-                statusPage: 'https://status.confluent.cloud/',
-                apiUrl: 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://status.confluent.cloud/api/v2/status.json')
+                description: 'Apache Kafka cloud service for real-time data streaming',
+                statusPage: 'https://status.confluent.cloud/'
             },
-            {
-                name: 'cloudflare',
+            cloudflare: {
                 displayName: 'Cloudflare',
-                statusPage: 'https://www.cloudflarestatus.com/',
-                apiUrl: 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://www.cloudflarestatus.com/api/v2/status.json')
+                description: 'Web performance and security platform',
+                statusPage: 'https://www.cloudflarestatus.com/'
             },
-            {
-                name: 'nylas',
+            nylas: {
                 displayName: 'Nylas',
-                statusPage: 'https://status-v3.nylas.com/',
-                // Nylas doesn't provide a simple status API, so we'll scrape the page
-                apiUrl: 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://status-v3.nylas.com/')
+                description: 'Email, calendar, and contacts API platform',
+                statusPage: 'https://status-v3.nylas.com/'
             }
-        ];
+        };
 
-        // Status checking functions
-        async function checkServiceStatus(service) {
-            try {
-                const response = await fetch(service.apiUrl);
-                const data = await response.json();
-                
-                if (service.name === 'nylas') {
-                    // For Nylas, we need to parse the HTML content
-                    return parseNylasStatus(data.contents);
-                } else {
-                    // For services with proper status APIs
-                    const statusData = JSON.parse(data.contents);
-                    return {
-                        name: service.name,
-                        status: mapStatus(statusData.status.indicator),
-                        description: statusData.status.description
-                    };
-                }
-            } catch (error) {
-                console.error(`Error checking ${service.name}:`, error);
-                return {
-                    name: service.name,
-                    status: 'unknown',
-                    description: 'Unable to fetch status - check manually'
-                };
-            }
-        }
-
-        function parseNylasStatus(htmlContent) {
-            // Look for key indicators in the HTML
-            const lowerContent = htmlContent.toLowerCase();
-            
-            if (lowerContent.includes('investigating') || lowerContent.includes('identified')) {
-                return {
-                    name: 'nylas',
-                    status: 'outage',
-                    description: 'Service issues detected - check status page for details'
-                };
-            } else if (lowerContent.includes('monitoring') || lowerContent.includes('update')) {
-                return {
-                    name: 'nylas',
-                    status: 'degraded',
-                    description: 'Service partially affected - monitoring ongoing'
-                };
-            } else if (lowerContent.includes('no incidents reported')) {
-                return {
-                    name: 'nylas',
-                    status: 'operational',
-                    description: 'All systems operational'
-                };
-            } else {
-                return {
-                    name: 'nylas',
-                    status: 'unknown',
-                    description: 'Status unclear - please check manually'
-                };
-            }
-        }
-
-        function mapStatus(indicator) {
-            switch (indicator) {
-                case 'none':
-                    return 'operational';
-                case 'minor':
-                    return 'degraded';
-                case 'major':
-                case 'critical':
-                    return 'outage';
-                default:
-                    return 'unknown';
-            }
-        }
-
-        function updateStatusIndicator(serviceName, status, description) {
-            const element = document.getElementById(`${serviceName}-status`);
-            element.className = `status-indicator status-${status}`;
-            
+        function getStatusIcon(status) {
             switch (status) {
+                case 'operational': return '🟢';
+                case 'degraded': return '🟡';
+                case 'outage': return '🔴';
+                default: return '⚪';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'operational': return 'Operational';
+                case 'degraded': return 'Degraded';
+                case 'outage': return 'Outage';
+                case 'unknown': return 'Unknown';
+                default: return 'Loading...';
+            }
+        }
+
+        function formatRelativeTime(isoString) {
+            const date = new Date(isoString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} minutes ago`;
+            
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `${diffHours} hours ago`;
+            
+            const diffDays = Math.floor(diffHours / 24);
+            return `${diffDays} days ago`;
+        }
+
+        function createServiceCard(service) {
+            const config = serviceConfigs[service.name] || {};
+            
+            return `
+                <div class="service-card">
+                    <div class="service-header">
+                        <h3 class="service-name">${service.displayName || config.displayName || service.name}</h3>
+                        <span class="status-indicator status-${service.status}">
+                            ${getStatusText(service.status)}
+                        </span>
+                    </div>
+                    <p class="service-description">
+                        ${service.description || 'Status check in progress...'}
+                    </p>
+                    <div class="service-links">
+                        <a href="${config.statusPage}" target="_blank" class="service-link">Status Page</a>
+                    </div>
+                    <div class="last-checked">
+                        Last checked: ${service.lastChecked ? formatRelativeTime(service.lastChecked) : 'Never'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateOverallStatus(overallStatus, services) {
+            const element = document.getElementById('overall-status-text');
+            const icon = getStatusIcon(overallStatus);
+            
+            switch (overallStatus) {
                 case 'operational':
-                    element.textContent = 'Operational';
+                    element.innerHTML = `${icon} All systems operational`;
+                    element.style.color = '#22543d';
                     break;
                 case 'degraded':
-                    element.textContent = 'Degraded';
+                    element.innerHTML = `${icon} Some services experiencing issues`;
+                    element.style.color = '#9c4221';
                     break;
                 case 'outage':
-                    element.textContent = 'Outage';
+                    element.innerHTML = `${icon} Service outages detected`;
+                    element.style.color = '#742a2a';
                     break;
                 default:
-                    element.textContent = 'Unknown';
+                    element.innerHTML = `${icon} System status unknown`;
+                    element.style.color = '#4a5568';
                     break;
             }
-            
-            element.title = description;
         }
 
-        function updateOverallStatus(statuses) {
-            const overallElement = document.getElementById('overall-status-text');
-            const hasOutage = statuses.some(s => s.status === 'outage');
-            const hasDegraded = statuses.some(s => s.status === 'degraded');
-            
-            if (hasOutage) {
-                overallElement.textContent = '🔴 Some services are experiencing outages';
-                overallElement.style.color = '#742a2a';
-            } else if (hasDegraded) {
-                overallElement.textContent = '🟡 Some services are experiencing issues';
-                overallElement.style.color = '#9c4221';
-            } else {
-                overallElement.textContent = '🟢 All systems operational';
-                overallElement.style.color = '#22543d';
+        function showError(message) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = `
+                <div class="error-message">
+                    ⚠️ ${message}
+                    <br><small>The dashboard will retry automatically. Check individual status pages for the most current information.</small>
+                </div>
+            `;
+        }
+
+        function clearError() {
+            document.getElementById('error-container').innerHTML = '';
+        }
+
+        async function loadStatus() {
+            try {
+                clearError();
+                
+                // Try to load status.json generated by GitHub Actions
+                const response = await fetch('./status.json?' + Date.now()); // Cache buster
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update services
+                const servicesContainer = document.getElementById('services-container');
+                servicesContainer.innerHTML = data.services.map(createServiceCard).join('');
+                
+                // Update overall status
+                updateOverallStatus(data.overallStatus, data.services);
+                
+                // Update timestamp
+                document.getElementById('last-updated-time').textContent = 
+                    formatRelativeTime(data.lastUpdated);
+                
+            } catch (error) {
+                console.error('Failed to load status:', error);
+                showError(`Failed to load status data: ${error.message}`);
+                
+                // Show fallback cards
+                const fallbackServices = Object.keys(serviceConfigs).map(name => ({
+                    name,
+                    displayName: serviceConfigs[name].displayName,
+                    status: 'unknown',
+                    description: 'Unable to determine current status',
+                    lastChecked: null
+                }));
+                
+                const servicesContainer = document.getElementById('services-container');
+                servicesContainer.innerHTML = fallbackServices.map(createServiceCard).join('');
+                
+                updateOverallStatus('unknown', fallbackServices);
             }
         }
 
-        async function checkAllServices() {
-            const statusPromises = services.map(service => checkServiceStatus(service));
-            const statuses = await Promise.all(statusPromises);
-            
-            statuses.forEach(status => {
-                updateStatusIndicator(status.name, status.status, status.description);
-            });
-            
-            updateOverallStatus(statuses);
-            
-            // Update last updated time
-            document.getElementById('last-updated-time').textContent = new Date().toLocaleString();
-        }
-
-        // Auto-refresh functionality
-        function startAutoRefresh() {
-            // Check immediately
-            checkAllServices();
-            
-            // Then check every 5 minutes
-            setInterval(checkAllServices, 5 * 60 * 1000);
-        }
-
-        // Start the status checking when page loads
-        window.addEventListener('load', startAutoRefresh);
+        // Load status immediately and then every 30 seconds
+        loadStatus();
+        setInterval(loadStatus, 30000);
     </script>
 </body>
 </html>

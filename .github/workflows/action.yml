@@ -1,0 +1,260 @@
+# .github/workflows/update-status.yml
+name: Update Service Status
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Allow manual trigger
+  push:
+    branches: [main]
+
+jobs:
+  update-status:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install dependencies
+      run: |
+        npm init -y
+        npm install cheerio axios
+    
+    - name: Check service statuses
+      run: |
+        cat > check-status.js << 'EOF'
+        const axios = require('axios');
+        const cheerio = require('cheerio');
+        const fs = require('fs');
+
+        async function checkConfluentStatus() {
+          try {
+            const response = await axios.get('https://status.confluent.cloud/api/v2/status.json', {
+              timeout: 10000
+            });
+            const data = response.data;
+            return {
+              name: 'confluent',
+              displayName: 'Confluent Cloud',
+              status: mapStatusPageIndicator(data.status.indicator),
+              description: data.status.description,
+              lastChecked: new Date().toISOString()
+            };
+          } catch (error) {
+            console.error('Confluent check failed:', error.message);
+            return {
+              name: 'confluent',
+              displayName: 'Confluent Cloud',
+              status: 'unknown',
+              description: 'Failed to fetch status',
+              lastChecked: new Date().toISOString()
+            };
+          }
+        }
+
+        async function checkCloudflareStatus() {
+          try {
+            const response = await axios.get('https://www.cloudflarestatus.com/api/v2/status.json', {
+              timeout: 10000
+            });
+            const data = response.data;
+            return {
+              name: 'cloudflare',
+              displayName: 'Cloudflare',
+              status: mapStatusPageIndicator(data.status.indicator),
+              description: data.status.description,
+              lastChecked: new Date().toISOString()
+            };
+          } catch (error) {
+            console.error('Cloudflare check failed:', error.message);
+            return {
+              name: 'cloudflare',
+              displayName: 'Cloudflare',
+              status: 'unknown',
+              description: 'Failed to fetch status',
+              lastChecked: new Date().toISOString()
+            };
+          }
+        }
+
+        async function checkNylasStatus() {
+          try {
+            const response = await axios.get('https://status-v3.nylas.com/', {
+              timeout: 15000,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; StatusBot/1.0)'
+              }
+            });
+            
+            const $ = cheerio.load(response.data);
+            const pageText = response.data.toLowerCase();
+            
+            console.log('Nylas page loaded, analyzing content...');
+            
+            let status = 'operational';
+            let description = 'All systems operational';
+            
+            // Look for the main status indicators in order of severity
+            // First check for active incidents (highest priority)
+            if (pageText.includes('investigating -') || pageText.includes('investigating:')) {
+              status = 'outage';
+              description = 'Currently investigating service issues';
+              console.log('Nylas: Found "investigating" status');
+            } 
+            else if (pageText.includes('identified -') || pageText.includes('identified:')) {
+              status = 'outage';  
+              description = 'Service issues identified';
+              console.log('Nylas: Found "identified" status');
+            }
+            else if (pageText.includes('monitoring -') || pageText.includes('monitoring:')) {
+              status = 'degraded';
+              description = 'Service issues being monitored';
+              console.log('Nylas: Found "monitoring" status');
+            }
+            else if (pageText.includes('update -') || pageText.includes('update:')) {
+              // Check if it's a recent update (could indicate ongoing issues)
+              const hasRecentUpdate = pageText.includes('jul 31') || 
+                                    pageText.includes('jul 30') || 
+                                    pageText.includes('hours ago') ||
+                                    pageText.includes('minutes ago');
+              if (hasRecentUpdate) {
+                status = 'degraded';
+                description = 'Recent service updates detected';
+                console.log('Nylas: Found recent updates');
+              }
+            }
+            else if (pageText.includes('resolved -') || pageText.includes('resolved:')) {
+              // Even if resolved, check if it was very recent
+              const hasVeryRecentResolution = pageText.includes('jul 31') || 
+                                            pageText.includes('hours ago') ||
+                                            pageText.includes('minutes ago');
+              if (hasVeryRecentResolution) {
+                status = 'degraded';
+                description = 'Recently resolved issues, monitoring stability';
+                console.log('Nylas: Found very recent resolution');
+              } else {
+                status = 'operational';
+                description = 'All systems operational';
+                console.log('Nylas: Found older resolved incidents, marking operational');
+              }
+            }
+            
+            // Additional checks using Cheerio for more precise parsing
+            const activeIncidents = $('.incident-container').filter((i, el) => {
+              const incidentText = $(el).text().toLowerCase();
+              return incidentText.includes('investigating') || 
+                     incidentText.includes('identified') ||
+                     incidentText.includes('monitoring');
+            });
+            
+            if (activeIncidents.length > 0) {
+              status = 'outage';
+              description = 'Active incidents detected on status page';
+              console.log(`Nylas: Found ${activeIncidents.length} active incidents`);
+            }
+            
+            // Check for system status indicators
+            const overallStatus = $('.overall-status, .status-indicator').text().toLowerCase();
+            if (overallStatus.includes('all systems operational')) {
+              // Only override if we haven't found specific incidents
+              if (status === 'operational') {
+                description = 'All systems operational';
+              }
+            }
+            
+            console.log(`Nylas final status: ${status} - ${description}`);
+            
+            return {
+              name: 'nylas',
+              displayName: 'Nylas',
+              status: status,
+              description: description,
+              lastChecked: new Date().toISOString()
+            };
+          } catch (error) {
+            console.error('Nylas check failed:', error.message);
+            return {
+              name: 'nylas',
+              displayName: 'Nylas',
+              status: 'unknown',
+              description: 'Failed to fetch status page',
+              lastChecked: new Date().toISOString()
+            };
+          }
+        }
+
+        function mapStatusPageIndicator(indicator) {
+          switch (indicator) {
+            case 'none':
+              return 'operational';
+            case 'minor':
+              return 'degraded';
+            case 'major':
+            case 'critical':
+              return 'outage';
+            default:
+              return 'unknown';
+          }
+        }
+
+        async function main() {
+          console.log('Checking service statuses...');
+          
+          const [confluent, cloudflare, nylas] = await Promise.all([
+            checkConfluentStatus(),
+            checkCloudflareStatus(),
+            checkNylasStatus()
+          ]);
+          
+          const statusData = {
+            services: [confluent, cloudflare, nylas],
+            lastUpdated: new Date().toISOString(),
+            overallStatus: determineOverallStatus([confluent, cloudflare, nylas])
+          };
+          
+          // Write to status.json
+          fs.writeFileSync('status.json', JSON.stringify(statusData, null, 2));
+          
+          console.log('Status check complete:');
+          console.log(`- Confluent: ${confluent.status}`);
+          console.log(`- Cloudflare: ${cloudflare.status}`);
+          console.log(`- Nylas: ${nylas.status}`);
+          console.log(`- Overall: ${statusData.overallStatus}`);
+        }
+
+        function determineOverallStatus(services) {
+          const hasOutage = services.some(s => s.status === 'outage');
+          const hasDegraded = services.some(s => s.status === 'degraded');
+          const hasUnknown = services.some(s => s.status === 'unknown');
+          
+          if (hasOutage) return 'outage';
+          if (hasDegraded) return 'degraded';
+          if (hasUnknown) return 'unknown';
+          return 'operational';
+        }
+
+        main().catch(console.error);
+        EOF
+        
+        node check-status.js
+    
+    - name: Commit and push status update
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add status.json
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update service status - $(date -u)"
+          git push
+        fi
