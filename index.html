@@ -211,18 +211,20 @@
         </div>
 
         <div class="last-updated">
-            Last updated: <span id="last-updated-time">Never</span>
+            Last updated: <span id="last-updated-time">Never</span><br>
+            <small style="opacity: 0.7; margin-top: 8px; display: block;">
+                ⚠️ Status detection is best-effort. For critical issues, always check the official status pages.
+            </small>
         </div>
     </div>
 
     <script>
-        // Service configurations
+        // Service configurations with correct API endpoints
         const services = [
             {
                 name: 'confluent',
                 displayName: 'Confluent Cloud',
                 statusPage: 'https://status.confluent.cloud/',
-                // Using a CORS proxy for demo - in production, you'd want your own backend
                 apiUrl: 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://status.confluent.cloud/api/v2/status.json')
             },
             {
@@ -235,7 +237,8 @@
                 name: 'nylas',
                 displayName: 'Nylas',
                 statusPage: 'https://status-v3.nylas.com/',
-                apiUrl: 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://status-v3.nylas.com/api/v2/status.json')
+                // Nylas doesn't provide a simple status API, so we'll scrape the page
+                apiUrl: 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://status-v3.nylas.com/')
             }
         ];
 
@@ -245,20 +248,55 @@
                 const response = await fetch(service.apiUrl);
                 const data = await response.json();
                 
-                // Parse the JSON content from the proxy response
-                const statusData = JSON.parse(data.contents);
-                
-                return {
-                    name: service.name,
-                    status: mapStatus(statusData.status.indicator),
-                    description: statusData.status.description
-                };
+                if (service.name === 'nylas') {
+                    // For Nylas, we need to parse the HTML content
+                    return parseNylasStatus(data.contents);
+                } else {
+                    // For services with proper status APIs
+                    const statusData = JSON.parse(data.contents);
+                    return {
+                        name: service.name,
+                        status: mapStatus(statusData.status.indicator),
+                        description: statusData.status.description
+                    };
+                }
             } catch (error) {
                 console.error(`Error checking ${service.name}:`, error);
                 return {
                     name: service.name,
                     status: 'unknown',
-                    description: 'Unable to fetch status'
+                    description: 'Unable to fetch status - check manually'
+                };
+            }
+        }
+
+        function parseNylasStatus(htmlContent) {
+            // Look for key indicators in the HTML
+            const lowerContent = htmlContent.toLowerCase();
+            
+            if (lowerContent.includes('investigating') || lowerContent.includes('identified')) {
+                return {
+                    name: 'nylas',
+                    status: 'outage',
+                    description: 'Service issues detected - check status page for details'
+                };
+            } else if (lowerContent.includes('monitoring') || lowerContent.includes('update')) {
+                return {
+                    name: 'nylas',
+                    status: 'degraded',
+                    description: 'Service partially affected - monitoring ongoing'
+                };
+            } else if (lowerContent.includes('no incidents reported')) {
+                return {
+                    name: 'nylas',
+                    status: 'operational',
+                    description: 'All systems operational'
+                };
+            } else {
+                return {
+                    name: 'nylas',
+                    status: 'unknown',
+                    description: 'Status unclear - please check manually'
                 };
             }
         }
