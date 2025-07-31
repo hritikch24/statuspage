@@ -140,45 +140,130 @@ jobs:
         async function checkAzureStatus() {
           console.log('Checking Azure Services...');
           try {
-            const response = await axios.get('https://status.azure.com/en-us/status/history/', {
+            const response = await axios.get('https://status.azure.com/en-us/status', {
               timeout: 15000,
               headers: { 'Accept': 'text/html' }
             });
+            
             const $ = cheerio.load(response.data);
             const pageText = response.data.toLowerCase();
             
             console.log('Azure: Analyzing status page...');
             
-            // Look for current service health indicators
-            if (pageText.includes('service issues') || pageText.includes('service degradation')) {
+            // Look for specific service outages or issues
+            const serviceIssues = [];
+            
+            // Check for current incidents section
+            $('.current-incidents, .incident-list, .service-health').each((i, el) => {
+              const incidentText = $(el).text().toLowerCase();
+              
+              if (incidentText.includes('outage') || incidentText.includes('down')) {
+                // Try to extract service names
+                const serviceName = $(el).find('.service-name, .affected-service').text() || 
+                                  incidentText.match(/azure (\w+)/)?.[1] || 'Unknown Service';
+                serviceIssues.push(`${serviceName} - Outage`);
+              } else if (incidentText.includes('degraded') || incidentText.includes('issues')) {
+                const serviceName = $(el).find('.service-name, .affected-service').text() || 
+                                  incidentText.match(/azure (\w+)/)?.[1] || 'Unknown Service';
+                serviceIssues.push(`${serviceName} - Degraded`);
+              }
+            });
+            
+            // Check page title and main status indicators
+            const pageTitle = $('title').text().toLowerCase();
+            const mainStatus = $('.status-banner, .overall-status, .service-status').text().toLowerCase();
+            
+            // Look for current service health status
+            if (pageText.includes('current service issues') || 
+                pageText.includes('we are investigating') ||
+                mainStatus.includes('investigating')) {
+              
+              // Try to find specific services mentioned
+              const mentionedServices = [];
+              const serviceMatches = pageText.match(/azure (\w+)/g);
+              if (serviceMatches) {
+                serviceMatches.forEach(match => {
+                  const service = match.replace('azure ', '').trim();
+                  if (!mentionedServices.includes(service)) {
+                    mentionedServices.push(service);
+                  }
+                });
+              }
+              
+              const description = mentionedServices.length > 0 
+                ? `Issues detected: ${mentionedServices.join(', ')}`
+                : 'Service issues detected - check Azure status page for details';
+              
               return {
                 name: 'azure',
                 displayName: 'Azure Services',
                 status: 'degraded',
-                description: 'Service issues detected',
-                lastChecked: new Date().toISOString()
-              };
-            } else if (pageText.includes('outage') || pageText.includes('down')) {
-              return {
-                name: 'azure',
-                displayName: 'Azure Services',
-                status: 'outage',
-                description: 'Service outages detected',
+                description: description,
                 lastChecked: new Date().toISOString()
               };
             }
             
-            // If we can load the page without issues, likely operational
+            // Check for widespread outages
+            if (pageText.includes('widespread') || 
+                pageText.includes('multiple services') ||
+                pageText.includes('major incident')) {
+              
+              return {
+                name: 'azure',
+                displayName: 'Azure Services',
+                status: 'outage',
+                description: 'Major incident affecting multiple services',
+                lastChecked: new Date().toISOString()
+              };
+            }
+            
+            // If we found specific service issues
+            if (serviceIssues.length > 0) {
+              const hasOutages = serviceIssues.some(issue => issue.includes('Outage'));
+              return {
+                name: 'azure',
+                displayName: 'Azure Services',
+                status: hasOutages ? 'outage' : 'degraded',
+                description: `Issues detected: ${serviceIssues.join(', ')}`,
+                lastChecked: new Date().toISOString()
+              };
+            }
+            
+            // Check if we can find any "all services operational" or similar messaging
+            if (pageTitle.includes('operational') || 
+                mainStatus.includes('operational') ||
+                pageText.includes('all systems operational') ||
+                pageText.includes('no current issues')) {
+              
+              return {
+                name: 'azure',
+                displayName: 'Azure Services',
+                status: 'operational',
+                description: 'All services operational',
+                lastChecked: new Date().toISOString()
+              };
+            }
+            
+            // If we can successfully load the page but can't determine specific status,
+            // default to operational (assume no news is good news for Azure)
             return {
               name: 'azure',
               displayName: 'Azure Services',
               status: 'operational',
-              description: 'All services operational',
+              description: 'Status page accessible - no major incidents detected',
               lastChecked: new Date().toISOString()
             };
+            
           } catch (error) {
             console.error('Azure check failed:', error.message);
-            return createErrorStatus('azure', 'Azure Services');
+            // If we can't reach the status page, that could indicate an issue
+            return {
+              name: 'azure',
+              displayName: 'Azure Services',
+              status: 'unknown',
+              description: 'Unable to fetch Azure status page',
+              lastChecked: new Date().toISOString()
+            };
           }
         }
 
