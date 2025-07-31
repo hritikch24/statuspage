@@ -22,12 +22,13 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'  # Updated to Node.js 20 for better compatibility
     
     - name: Install dependencies
       run: |
         npm init -y
-        npm install cheerio axios
+        # Try different approaches for compatibility
+        npm install cheerio@^1.0.0-rc.12 axios@^1.6.0 || npm install cheerio axios --legacy-peer-deps || npm install cheerio axios --force
     
     - name: Check service statuses (product-wise)
       run: |
@@ -36,9 +37,25 @@ jobs:
         const cheerio = require('cheerio');
         const fs = require('fs');
 
-        // Configure axios with better defaults
-        axios.defaults.timeout = 15000;
-        axios.defaults.headers['User-Agent'] = 'Mozilla/5.0 (compatible; StatusBot/1.0)';
+        // Configure axios with better defaults and compatibility
+        const axiosConfig = {
+          timeout: 15000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; StatusBot/1.0)',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+          },
+          maxRedirects: 5,
+          validateStatus: function (status) {
+            return status >= 200 && status < 500; // Accept 4xx as valid responses
+          }
+        };
+        
+        // Apply default config to axios
+        Object.assign(axios.defaults, axiosConfig);
 
         // Helper functions
         function mapStatusPageIndicator(indicator) {
@@ -80,11 +97,13 @@ jobs:
           return productMapping[serviceName] || 'Unknown Product';
         }
 
-        // Service check functions
         async function checkConfluentStatus() {
           console.log('Checking Confluent Cloud...');
           try {
-            const response = await axios.get('https://status.confluent.cloud/api/v2/status.json');
+            const response = await axios.get('https://status.confluent.cloud/api/v2/status.json', {
+              timeout: 10000,
+              headers: { 'Accept': 'application/json' }
+            });
             return {
               name: 'confluent',
               displayName: 'Confluent Cloud',
@@ -101,7 +120,10 @@ jobs:
         async function checkCloudflareStatus() {
           console.log('Checking Cloudflare...');
           try {
-            const response = await axios.get('https://www.cloudflarestatus.com/api/v2/status.json');
+            const response = await axios.get('https://www.cloudflarestatus.com/api/v2/status.json', {
+              timeout: 10000,
+              headers: { 'Accept': 'application/json' }
+            });
             return {
               name: 'cloudflare',
               displayName: 'Cloudflare',
@@ -118,7 +140,10 @@ jobs:
         async function checkAzureStatus() {
           console.log('Checking Azure Services...');
           try {
-            const response = await axios.get('https://status.azure.com/en-us/status/history/');
+            const response = await axios.get('https://status.azure.com/en-us/status/history/', {
+              timeout: 15000,
+              headers: { 'Accept': 'text/html' }
+            });
             const $ = cheerio.load(response.data);
             const pageText = response.data.toLowerCase();
             
