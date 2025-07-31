@@ -5,58 +5,58 @@
       "displayName": "Confluent Cloud",
       "status": "operational",
       "description": "All Systems Operational",
-      "lastChecked": "2025-07-31T08:10:06.857Z"
+      "lastChecked": "2025-07-31T08:17:49.686Z"
     },
     {
       "name": "cloudflare",
       "displayName": "Cloudflare",
       "status": "degraded",
       "description": "Minor Service Outage",
-      "lastChecked": "2025-07-31T08:10:06.855Z"
+      "lastChecked": "2025-07-31T08:17:49.706Z"
     },
     {
       "name": "nylas",
       "displayName": "Nylas",
       "status": "degraded",
       "description": "Active service issues detected",
-      "lastChecked": "2025-07-31T08:10:07.224Z"
+      "lastChecked": "2025-07-31T08:17:49.985Z"
     },
     {
       "name": "sendgrid",
       "displayName": "SendGrid",
       "status": "operational",
       "description": "All Systems Operational",
-      "lastChecked": "2025-07-31T08:10:06.896Z"
+      "lastChecked": "2025-07-31T08:17:49.690Z"
     },
     {
       "name": "twilio",
       "displayName": "Twilio Communications",
       "status": "degraded",
       "description": "Partially Degraded Service",
-      "lastChecked": "2025-07-31T08:10:07.053Z"
+      "lastChecked": "2025-07-31T08:17:49.702Z"
     },
     {
       "name": "postmark",
       "displayName": "Postmark",
-      "status": "degraded",
-      "description": "Service partially affected",
-      "lastChecked": "2025-07-31T08:10:07.488Z"
+      "status": "operational",
+      "description": "All systems are go!",
+      "lastChecked": "2025-07-31T08:17:49.870Z"
     },
     {
       "name": "zohomail",
       "displayName": "Zoho Mail",
       "status": "operational",
       "description": "All systems operational",
-      "lastChecked": "2025-07-31T08:10:07.547Z"
+      "lastChecked": "2025-07-31T08:17:50.100Z"
     },
     {
       "name": "mailgun",
       "displayName": "Mailgun",
       "status": "operational",
       "description": "All Systems Operational",
-      "lastChecked": "2025-07-31T08:10:07.333Z"
+      "lastChecked": "2025-07-31T08:17:49.990Z"
     }
   ],
-  "lastUpdated": "2025-07-31T08:10:07.547Z",
+  "lastUpdated": "2025-07-31T08:17:50.100Z",
   "overallStatus": "degraded"
 }
