@@ -36,6 +36,10 @@ jobs:
         const cheerio = require('cheerio');
         const fs = require('fs');
 
+        // Configure axios with better defaults
+        axios.defaults.timeout = 15000;
+        axios.defaults.headers['User-Agent'] = 'Mozilla/5.0 (compatible; StatusBot/1.0)';
+
         // Helper functions
         function mapStatusPageIndicator(indicator) {
           switch (indicator) {
@@ -61,36 +65,83 @@ jobs:
             },
             communityStatus: {
               status: 'unknown',
-              description: 'Failed to fetch community reports'
+              description: 'Community data unavailable'
             },
             lastChecked: new Date().toISOString()
           };
         }
 
-        // Enhanced service checks with dual sources
+        // Simplified community check using multiple sources
+        async function getCommunityStatus(serviceName, alternativeNames = []) {
+          const checkUrls = [
+            `https://downdetector.com/status/${serviceName}`,
+            `https://isdown.app/status/${serviceName}`,
+            ...alternativeNames.map(name => `https://downdetector.com/status/${name}`),
+            ...alternativeNames.map(name => `https://isdown.app/status/${name}`)
+          ];
+
+          for (const url of checkUrls) {
+            try {
+              console.log(`Checking community status: ${url}`);
+              const response = await axios.get(url, { 
+                timeout: 8000,
+                validateStatus: status => status < 500 // Accept 4xx as valid responses
+              });
+              
+              if (response.status === 200) {
+                const pageText = response.data.toLowerCase();
+                
+                // Look for outage indicators
+                if (pageText.includes('major outage') || 
+                    pageText.includes('service down') ||
+                    pageText.includes('widespread issues') ||
+                    pageText.includes('currently down')) {
+                  return { status: 'outage', description: 'Community reports widespread issues' };
+                }
+                
+                // Look for problem indicators
+                if (pageText.includes('problems') || 
+                    pageText.includes('issues') ||
+                    pageText.includes('slow') ||
+                    pageText.includes('outage reports')) {
+                  return { status: 'degraded', description: 'Community reports some issues' };
+                }
+                
+                // If we can successfully parse the page, assume operational
+                if (pageText.includes('no problems') || 
+                    pageText.includes('operational') || 
+                    pageText.includes('working normally')) {
+                  return { status: 'operational', description: 'No community issues reported' };
+                }
+              }
+            } catch (error) {
+              console.log(`Community check failed for ${url}: ${error.message}`);
+              continue; // Try next URL
+            }
+          }
+          
+          // If all community checks fail, return neutral status
+          return { status: 'operational', description: 'Community status unavailable' };
+        }
+
+        // Service check functions
         async function checkConfluentStatus() {
+          console.log('Checking Confluent Cloud...');
           try {
             const [official, community] = await Promise.all([
               // Official API
-              axios.get('https://status.confluent.cloud/api/v2/status.json', { timeout: 10000 })
+              axios.get('https://status.confluent.cloud/api/v2/status.json')
                 .then(response => ({
                   status: mapStatusPageIndicator(response.data.status.indicator),
                   description: response.data.status.description
                 }))
-                .catch(() => ({ status: 'unknown', description: 'API unavailable' })),
+                .catch(error => {
+                  console.log('Confluent API failed:', error.message);
+                  return { status: 'unknown', description: 'Official API unavailable' };
+                }),
               
-              // Community reports from StatusGator-style
-              axios.get('https://statusgator.com/services/confluent-cloud', { timeout: 10000 })
-                .then(response => {
-                  const pageText = response.data.toLowerCase();
-                  if (pageText.includes('down') || pageText.includes('outage')) {
-                    return { status: 'outage', description: 'Community reports issues' };
-                  } else if (pageText.includes('warn') || pageText.includes('degraded')) {
-                    return { status: 'degraded', description: 'Community reports problems' };
-                  }
-                  return { status: 'operational', description: 'No community issues reported' };
-                })
-                .catch(() => ({ status: 'unknown', description: 'Community data unavailable' }))
+              // Community reports
+              getCommunityStatus('confluent', ['confluent-cloud'])
             ]);
 
             return {
@@ -107,26 +158,20 @@ jobs:
         }
 
         async function checkCloudflareStatus() {
+          console.log('Checking Cloudflare...');
           try {
             const [official, community] = await Promise.all([
-              axios.get('https://www.cloudflarestatus.com/api/v2/status.json', { timeout: 10000 })
+              axios.get('https://www.cloudflarestatus.com/api/v2/status.json')
                 .then(response => ({
                   status: mapStatusPageIndicator(response.data.status.indicator),
                   description: response.data.status.description
                 }))
-                .catch(() => ({ status: 'unknown', description: 'API unavailable' })),
+                .catch(error => {
+                  console.log('Cloudflare API failed:', error.message);
+                  return { status: 'unknown', description: 'Official API unavailable' };
+                }),
               
-              axios.get('https://statusgator.com/services/cloudflare', { timeout: 10000 })
-                .then(response => {
-                  const pageText = response.data.toLowerCase();
-                  if (pageText.includes('down') || pageText.includes('outage')) {
-                    return { status: 'outage', description: 'Community reports issues' };
-                  } else if (pageText.includes('warn') || pageText.includes('degraded')) {
-                    return { status: 'degraded', description: 'Community reports problems' };
-                  }
-                  return { status: 'operational', description: 'No community issues reported' };
-                })
-                .catch(() => ({ status: 'unknown', description: 'Community data unavailable' }))
+              getCommunityStatus('cloudflare')
             ]);
 
             return {
@@ -143,84 +188,60 @@ jobs:
         }
 
         async function checkNylasStatus() {
+          console.log('Checking Nylas...');
           try {
             const [official, community] = await Promise.all([
               // Enhanced official page parsing
-              axios.get('https://status-v3.nylas.com/', { 
-                timeout: 15000,
-                headers: { 'User-Agent': 'Mozilla/5.0 (compatible; StatusBot/1.0)' }
-              }).then(response => {
-                const $ = cheerio.load(response.data);
-                const pageText = response.data.toLowerCase();
-                
-                console.log('Nylas official: Analyzing content...');
-                
-                // Look for current active incidents more aggressively
-                if (pageText.includes('investigating -') || 
-                    pageText.includes('investigating:') ||
-                    $('.incident-title').text().toLowerCase().includes('investigating')) {
-                  return { status: 'outage', description: 'Currently investigating service issues' };
-                }
-                
-                if (pageText.includes('identified -') || 
-                    pageText.includes('identified:') ||
-                    $('.incident-title').text().toLowerCase().includes('identified')) {
-                  return { status: 'outage', description: 'Service issues identified' };
-                }
-                
-                // Check for "Reopened" incidents (these are active!)
-                if (pageText.includes('reopened:') || pageText.includes('reopened -')) {
-                  return { status: 'degraded', description: 'Reopened incident - ongoing issues' };
-                }
-                
-                if (pageText.includes('monitoring -') || pageText.includes('monitoring:')) {
-                  return { status: 'degraded', description: 'Service issues being monitored' };
-                }
-                
-                // Check for very recent updates (last 48 hours)
-                const today = new Date();
-                const recentDatePatterns = [
-                  'jul 31', 'jul 30', 'jul 29', 'jul 28',
-                  'hours ago', 'minutes ago', 'hour ago', 'minute ago'
-                ];
-                
-                const hasRecentActivity = recentDatePatterns.some(pattern => 
-                  pageText.includes(pattern)
-                );
-                
-                if (hasRecentActivity && (pageText.includes('update -') || pageText.includes('error'))) {
-                  return { status: 'degraded', description: 'Recent service updates or errors detected' };
-                }
-                
-                return { status: 'operational', description: 'No active incidents detected' };
-              }).catch(() => ({ status: 'unknown', description: 'Official page unavailable' })),
-              
-              // Community reports
-              axios.get('https://statusgator.com/services/nylas/api-v3', { timeout: 10000 })
+              axios.get('https://status-v3.nylas.com/')
                 .then(response => {
+                  const $ = cheerio.load(response.data);
                   const pageText = response.data.toLowerCase();
                   
-                  // Look for current issues
-                  if (pageText.includes('down for') || pageText.includes('outage')) {
-                    return { status: 'outage', description: 'Community reports outages' };
+                  console.log('Nylas: Analyzing official status page...');
+                  
+                  // More aggressive detection for current issues
+                  const currentIncidentKeywords = [
+                    'investigating -', 'investigating:', 
+                    'identified -', 'identified:',
+                    'reopened:', 'reopened -',
+                    'elevated error', 'elevated 504', 'elevated 502'
+                  ];
+                  
+                  for (const keyword of currentIncidentKeywords) {
+                    if (pageText.includes(keyword)) {
+                      console.log(`Nylas: Found active incident keyword: ${keyword}`);
+                      if (keyword.includes('investigating') || keyword.includes('identified')) {
+                        return { status: 'outage', description: 'Currently investigating service issues' };
+                      } else {
+                        return { status: 'degraded', description: 'Active service issues detected' };
+                      }
+                    }
                   }
                   
-                  if (pageText.includes('warning for') || pageText.includes('warn')) {
-                    return { status: 'degraded', description: 'Community reports warnings/issues' };
+                  // Check for monitoring status
+                  if (pageText.includes('monitoring -') || pageText.includes('monitoring:')) {
+                    return { status: 'degraded', description: 'Service issues being monitored' };
                   }
                   
-                  // Check for recent incidents (last few days)
-                  if (pageText.includes('july 28') || pageText.includes('july 29') || 
-                      pageText.includes('july 30') || pageText.includes('july 31')) {
-                    return { status: 'degraded', description: 'Recent community-reported issues' };
+                  // Check for very recent activity (last 3 days)
+                  const recentDates = ['jul 31', 'jul 30', 'jul 29', 'july 31', 'july 30', 'july 29'];
+                  const hasRecentActivity = recentDates.some(date => pageText.includes(date));
+                  
+                  if (hasRecentActivity && (pageText.includes('error') || pageText.includes('issue'))) {
+                    return { status: 'degraded', description: 'Recent service issues or errors detected' };
                   }
                   
-                  return { status: 'operational', description: 'No community issues reported' };
+                  return { status: 'operational', description: 'No active incidents detected' };
                 })
-                .catch(() => ({ status: 'unknown', description: 'Community data unavailable' }))
+                .catch(error => {
+                  console.log('Nylas official check failed:', error.message);
+                  return { status: 'unknown', description: 'Official page unavailable' };
+                }),
+              
+              getCommunityStatus('nylas', ['nylas-api'])
             ]);
 
-            console.log(`Nylas status - Official: ${official.status}, Community: ${community.status}`);
+            console.log(`Nylas result - Official: ${official.status}, Community: ${community.status}`);
 
             return {
               name: 'nylas',
@@ -236,26 +257,20 @@ jobs:
         }
 
         async function checkSendGridStatus() {
+          console.log('Checking SendGrid...');
           try {
             const [official, community] = await Promise.all([
-              axios.get('https://status.sendgrid.com/api/v2/status.json', { timeout: 10000 })
+              axios.get('https://status.sendgrid.com/api/v2/status.json')
                 .then(response => ({
                   status: mapStatusPageIndicator(response.data.status.indicator),
                   description: response.data.status.description
                 }))
-                .catch(() => ({ status: 'unknown', description: 'API unavailable' })),
+                .catch(error => {
+                  console.log('SendGrid API failed:', error.message);
+                  return { status: 'unknown', description: 'Official API unavailable' };
+                }),
               
-              axios.get('https://statusgator.com/services/sendgrid', { timeout: 10000 })
-                .then(response => {
-                  const pageText = response.data.toLowerCase();
-                  if (pageText.includes('down') || pageText.includes('outage')) {
-                    return { status: 'outage', description: 'Community reports issues' };
-                  } else if (pageText.includes('warn') || pageText.includes('degraded')) {
-                    return { status: 'degraded', description: 'Community reports problems' };
-                  }
-                  return { status: 'operational', description: 'No community issues reported' };
-                })
-                .catch(() => ({ status: 'unknown', description: 'Community data unavailable' }))
+              getCommunityStatus('sendgrid', ['twilio-sendgrid'])
             ]);
 
             return {
@@ -272,26 +287,20 @@ jobs:
         }
 
         async function checkTwilioStatus() {
+          console.log('Checking Twilio...');
           try {
             const [official, community] = await Promise.all([
-              axios.get('https://status.twilio.com/api/v2/status.json', { timeout: 10000 })
+              axios.get('https://status.twilio.com/api/v2/status.json')
                 .then(response => ({
                   status: mapStatusPageIndicator(response.data.status.indicator),
                   description: response.data.status.description
                 }))
-                .catch(() => ({ status: 'unknown', description: 'API unavailable' })),
+                .catch(error => {
+                  console.log('Twilio API failed:', error.message);
+                  return { status: 'unknown', description: 'Official API unavailable' };
+                }),
               
-              axios.get('https://statusgator.com/services/twilio', { timeout: 10000 })
-                .then(response => {
-                  const pageText = response.data.toLowerCase();
-                  if (pageText.includes('down') || pageText.includes('outage')) {
-                    return { status: 'outage', description: 'Community reports issues' };
-                  } else if (pageText.includes('warn') || pageText.includes('degraded')) {
-                    return { status: 'degraded', description: 'Community reports problems' };
-                  }
-                  return { status: 'operational', description: 'No community issues reported' };
-                })
-                .catch(() => ({ status: 'unknown', description: 'Community data unavailable' }))
+              getCommunityStatus('twilio')
             ]);
 
             return {
@@ -308,15 +317,20 @@ jobs:
         }
 
         async function checkPostmarkStatus() {
+          console.log('Checking Postmark...');
           try {
             const [official, community] = await Promise.all([
-              axios.get('https://status.postmarkapp.com/api/v1/page', { timeout: 10000 })
-                .then(response => {
+              // Try multiple endpoints for Postmark
+              (async () => {
+                try {
+                  // Try the new Sorry API first
+                  const response = await axios.get('https://status.postmarkapp.com/api/v1/page');
                   const data = response.data;
-                  let status = 'operational';
-                  let description = data.page.state_text || 'All systems operational';
                   
-                  switch (data.page.state) {
+                  let status = 'operational';
+                  let description = data.page?.state_text || 'All systems operational';
+                  
+                  switch (data.page?.state) {
                     case 'operational':
                       status = 'operational';
                       break;
@@ -328,25 +342,30 @@ jobs:
                       description = 'Scheduled maintenance in progress';
                       break;
                     default:
-                      status = 'unknown';
+                      status = 'operational';
                       break;
                   }
                   
                   return { status, description };
-                })
-                .catch(() => ({ status: 'unknown', description: 'API unavailable' })),
-              
-              axios.get('https://statusgator.com/services/postmark', { timeout: 10000 })
-                .then(response => {
+                } catch (apiError) {
+                  console.log('Postmark API failed, trying HTML:', apiError.message);
+                  
+                  // Fallback to HTML parsing
+                  const response = await axios.get('https://status.postmarkapp.com/');
+                  const $ = cheerio.load(response.data);
                   const pageText = response.data.toLowerCase();
-                  if (pageText.includes('down') || pageText.includes('outage')) {
-                    return { status: 'outage', description: 'Community reports issues' };
-                  } else if (pageText.includes('warn') || pageText.includes('degraded')) {
-                    return { status: 'degraded', description: 'Community reports problems' };
+                  
+                  if (pageText.includes('investigating') || pageText.includes('identified')) {
+                    return { status: 'outage', description: 'Service issues detected' };
+                  } else if (pageText.includes('monitoring') || pageText.includes('degraded')) {
+                    return { status: 'degraded', description: 'Service partially affected' };
                   }
-                  return { status: 'operational', description: 'No community issues reported' };
-                })
-                .catch(() => ({ status: 'unknown', description: 'Community data unavailable' }))
+                  
+                  return { status: 'operational', description: 'All systems operational' };
+                }
+              })(),
+              
+              getCommunityStatus('postmark', ['postmark-app'])
             ]);
 
             return {
@@ -363,38 +382,32 @@ jobs:
         }
 
         async function checkZohoMailStatus() {
+          console.log('Checking Zoho Mail...');
           try {
             const [official, community] = await Promise.all([
-              axios.get('https://zohostatus.com/', { 
-                timeout: 15000,
-                headers: { 'User-Agent': 'Mozilla/5.0 (compatible; StatusBot/1.0)' }
-              }).then(response => {
-                const $ = cheerio.load(response.data);
-                const pageText = response.data.toLowerCase();
-                
-                // Look for Mail-specific issues
-                if (pageText.includes('mail') && (pageText.includes('down') || pageText.includes('outage'))) {
-                  return { status: 'outage', description: 'Mail service experiencing issues' };
-                } else if (pageText.includes('mail') && (pageText.includes('degraded') || pageText.includes('slow'))) {
-                  return { status: 'degraded', description: 'Mail service experiencing performance issues' };
-                } else if (pageText.includes('all systems operational') || pageText.includes('no issues')) {
-                  return { status: 'operational', description: 'All systems operational' };
-                }
-                
-                return { status: 'operational', description: 'No specific mail issues detected' };
-              }).catch(() => ({ status: 'unknown', description: 'Official page unavailable' })),
-              
-              axios.get('https://statusgator.com/services/zoho-mail', { timeout: 10000 })
+              axios.get('https://zohostatus.com/')
                 .then(response => {
+                  const $ = cheerio.load(response.data);
                   const pageText = response.data.toLowerCase();
-                  if (pageText.includes('down') || pageText.includes('outage')) {
-                    return { status: 'outage', description: 'Community reports issues' };
-                  } else if (pageText.includes('warn') || pageText.includes('degraded')) {
-                    return { status: 'degraded', description: 'Community reports problems' };
+                  
+                  // Look for Mail-specific issues
+                  if (pageText.includes('mail') && (pageText.includes('down') || pageText.includes('outage'))) {
+                    return { status: 'outage', description: 'Mail service experiencing issues' };
+                  } else if (pageText.includes('mail') && (pageText.includes('degraded') || pageText.includes('slow'))) {
+                    return { status: 'degraded', description: 'Mail service experiencing performance issues' };
+                  } else if (pageText.includes('all systems operational') || pageText.includes('no issues')) {
+                    return { status: 'operational', description: 'All systems operational' };
                   }
-                  return { status: 'operational', description: 'No community issues reported' };
+                  
+                  // Default to operational if we can load the page
+                  return { status: 'operational', description: 'No specific mail issues detected' };
                 })
-                .catch(() => ({ status: 'unknown', description: 'Community data unavailable' }))
+                .catch(error => {
+                  console.log('Zoho official check failed:', error.message);
+                  return { status: 'unknown', description: 'Official page unavailable' };
+                }),
+              
+              getCommunityStatus('zoho', ['zoho-mail'])
             ]);
 
             return {
@@ -411,41 +424,35 @@ jobs:
         }
 
         async function checkMailgunStatus() {
+          console.log('Checking Mailgun...');
           try {
             const [official, community] = await Promise.all([
               // Try API first, fallback to HTML
-              axios.get('https://status.mailgun.com/api/v2/status.json', { timeout: 10000 })
-                .then(response => ({
-                  status: mapStatusPageIndicator(response.data.status.indicator),
-                  description: response.data.status.description
-                }))
-                .catch(() => {
+              (async () => {
+                try {
+                  const response = await axios.get('https://status.mailgun.com/api/v2/status.json');
+                  return {
+                    status: mapStatusPageIndicator(response.data.status.indicator),
+                    description: response.data.status.description
+                  };
+                } catch (apiError) {
+                  console.log('Mailgun API failed, trying HTML:', apiError.message);
+                  
                   // Fallback to HTML parsing
-                  return axios.get('https://status.mailgun.com/', { 
-                    timeout: 15000,
-                    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; StatusBot/1.0)' }
-                  }).then(response => {
-                    const pageText = response.data.toLowerCase();
-                    if (pageText.includes('investigating') || pageText.includes('identified')) {
-                      return { status: 'outage', description: 'Service issues detected' };
-                    } else if (pageText.includes('monitoring') || pageText.includes('degraded')) {
-                      return { status: 'degraded', description: 'Service partially affected' };
-                    }
-                    return { status: 'operational', description: 'All systems operational' };
-                  }).catch(() => ({ status: 'unknown', description: 'Status unavailable' }));
-                }),
-              
-              axios.get('https://statusgator.com/services/mailgun', { timeout: 10000 })
-                .then(response => {
+                  const response = await axios.get('https://status.mailgun.com/');
                   const pageText = response.data.toLowerCase();
-                  if (pageText.includes('down') || pageText.includes('outage')) {
-                    return { status: 'outage', description: 'Community reports issues' };
-                  } else if (pageText.includes('warn') || pageText.includes('degraded')) {
-                    return { status: 'degraded', description: 'Community reports problems' };
+                  
+                  if (pageText.includes('investigating') || pageText.includes('identified')) {
+                    return { status: 'outage', description: 'Service issues detected' };
+                  } else if (pageText.includes('monitoring') || pageText.includes('degraded')) {
+                    return { status: 'degraded', description: 'Service partially affected' };
                   }
-                  return { status: 'operational', description: 'No community issues reported' };
-                })
-                .catch(() => ({ status: 'unknown', description: 'Community data unavailable' }))
+                  
+                  return { status: 'operational', description: 'All systems operational' };
+                }
+              })(),
+              
+              getCommunityStatus('mailgun')
             ]);
 
             return {
@@ -467,7 +474,7 @@ jobs:
           const hasOfficialDegraded = services.some(s => s.officialStatus?.status === 'degraded');
           const hasCommunityDegraded = services.some(s => s.communityStatus?.status === 'degraded');
           const hasUnknown = services.some(s => 
-            s.officialStatus?.status === 'unknown' || s.communityStatus?.status === 'unknown'
+            s.officialStatus?.status === 'unknown' && s.communityStatus?.status === 'unknown'
           );
           
           if (hasOfficialOutage || hasCommunityOutage) return 'outage';
@@ -477,7 +484,7 @@ jobs:
         }
 
         async function main() {
-          console.log('Checking service statuses with dual sources...');
+          console.log('=== Starting service status checks ===');
           
           const services = await Promise.all([
             checkConfluentStatus(),
@@ -499,7 +506,7 @@ jobs:
           // Write to status.json
           fs.writeFileSync('status.json', JSON.stringify(statusData, null, 2));
           
-          console.log('Status check complete:');
+          console.log('=== Status check complete ===');
           services.forEach(service => {
             console.log(`- ${service.displayName}:`);
             console.log(`  Official: ${service.officialStatus?.status || 'unknown'}`);
