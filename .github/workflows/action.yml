@@ -36,6 +36,7 @@ jobs:
         const cheerio = require('cheerio');
         const fs = require('fs');
 
+        // Original services
         async function checkConfluentStatus() {
           try {
             const response = await axios.get('https://status.confluent.cloud/api/v2/status.json', {
@@ -51,13 +52,7 @@ jobs:
             };
           } catch (error) {
             console.error('Confluent check failed:', error.message);
-            return {
-              name: 'confluent',
-              displayName: 'Confluent Cloud',
-              status: 'unknown',
-              description: 'Failed to fetch status',
-              lastChecked: new Date().toISOString()
-            };
+            return createErrorStatus('confluent', 'Confluent Cloud');
           }
         }
 
@@ -76,13 +71,7 @@ jobs:
             };
           } catch (error) {
             console.error('Cloudflare check failed:', error.message);
-            return {
-              name: 'cloudflare',
-              displayName: 'Cloudflare',
-              status: 'unknown',
-              description: 'Failed to fetch status',
-              lastChecked: new Date().toISOString()
-            };
+            return createErrorStatus('cloudflare', 'Cloudflare');
           }
         }
 
@@ -104,7 +93,6 @@ jobs:
             let description = 'All systems operational';
             
             // Look for the main status indicators in order of severity
-            // First check for active incidents (highest priority)
             if (pageText.includes('investigating -') || pageText.includes('investigating:')) {
               status = 'outage';
               description = 'Currently investigating service issues';
@@ -121,7 +109,6 @@ jobs:
               console.log('Nylas: Found "monitoring" status');
             }
             else if (pageText.includes('update -') || pageText.includes('update:')) {
-              // Check if it's a recent update (could indicate ongoing issues)
               const hasRecentUpdate = pageText.includes('jul 31') || 
                                     pageText.includes('jul 30') || 
                                     pageText.includes('hours ago') ||
@@ -133,7 +120,6 @@ jobs:
               }
             }
             else if (pageText.includes('resolved -') || pageText.includes('resolved:')) {
-              // Even if resolved, check if it was very recent
               const hasVeryRecentResolution = pageText.includes('jul 31') || 
                                             pageText.includes('hours ago') ||
                                             pageText.includes('minutes ago');
@@ -148,29 +134,6 @@ jobs:
               }
             }
             
-            // Additional checks using Cheerio for more precise parsing
-            const activeIncidents = $('.incident-container').filter((i, el) => {
-              const incidentText = $(el).text().toLowerCase();
-              return incidentText.includes('investigating') || 
-                     incidentText.includes('identified') ||
-                     incidentText.includes('monitoring');
-            });
-            
-            if (activeIncidents.length > 0) {
-              status = 'outage';
-              description = 'Active incidents detected on status page';
-              console.log(`Nylas: Found ${activeIncidents.length} active incidents`);
-            }
-            
-            // Check for system status indicators
-            const overallStatus = $('.overall-status, .status-indicator').text().toLowerCase();
-            if (overallStatus.includes('all systems operational')) {
-              // Only override if we haven't found specific incidents
-              if (status === 'operational') {
-                description = 'All systems operational';
-              }
-            }
-            
             console.log(`Nylas final status: ${status} - ${description}`);
             
             return {
@@ -182,16 +145,187 @@ jobs:
             };
           } catch (error) {
             console.error('Nylas check failed:', error.message);
-            return {
-              name: 'nylas',
-              displayName: 'Nylas',
-              status: 'unknown',
-              description: 'Failed to fetch status page',
-              lastChecked: new Date().toISOString()
-            };
+            return createErrorStatus('nylas', 'Nylas');
           }
         }
 
+        // New email/communication services
+        async function checkSendGridStatus() {
+          try {
+            const response = await axios.get('https://status.sendgrid.com/api/v2/status.json', {
+              timeout: 10000
+            });
+            const data = response.data;
+            return {
+              name: 'sendgrid',
+              displayName: 'SendGrid',
+              status: mapStatusPageIndicator(data.status.indicator),
+              description: data.status.description,
+              lastChecked: new Date().toISOString()
+            };
+          } catch (error) {
+            console.error('SendGrid check failed:', error.message);
+            return createErrorStatus('sendgrid', 'SendGrid');
+          }
+        }
+
+        async function checkTwilioStatus() {
+          try {
+            const response = await axios.get('https://status.twilio.com/api/v2/status.json', {
+              timeout: 10000
+            });
+            const data = response.data;
+            return {
+              name: 'twilio',
+              displayName: 'Twilio Communications',
+              status: mapStatusPageIndicator(data.status.indicator),
+              description: data.status.description,
+              lastChecked: new Date().toISOString()
+            };
+          } catch (error) {
+            console.error('Twilio check failed:', error.message);
+            return createErrorStatus('twilio', 'Twilio Communications');
+          }
+        }
+
+        async function checkPostmarkStatus() {
+          try {
+            const response = await axios.get('https://status.postmarkapp.com/api/v1/page', {
+              timeout: 10000
+            });
+            const data = response.data;
+            
+            // Postmark uses Sorry's API format
+            let status = 'operational';
+            let description = data.page.state_text || 'All systems operational';
+            
+            switch (data.page.state) {
+              case 'operational':
+                status = 'operational';
+                break;
+              case 'degraded':
+                status = 'degraded';
+                break;
+              case 'maintenance':
+                status = 'degraded';
+                description = 'Scheduled maintenance in progress';
+                break;
+              default:
+                status = 'unknown';
+                break;
+            }
+            
+            return {
+              name: 'postmark',
+              displayName: 'Postmark',
+              status: status,
+              description: description,
+              lastChecked: new Date().toISOString()
+            };
+          } catch (error) {
+            console.error('Postmark check failed:', error.message);
+            return createErrorStatus('postmark', 'Postmark');
+          }
+        }
+
+        async function checkZohoMailStatus() {
+          try {
+            // Zoho doesn't have a simple status API, so we'll check their main status page
+            const response = await axios.get('https://zohostatus.com/', {
+              timeout: 15000,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; StatusBot/1.0)'
+              }
+            });
+            
+            const $ = cheerio.load(response.data);
+            const pageText = response.data.toLowerCase();
+            
+            let status = 'operational';
+            let description = 'All systems operational';
+            
+            // Look for Mail-specific issues
+            if (pageText.includes('mail') && (pageText.includes('down') || pageText.includes('outage'))) {
+              status = 'outage';
+              description = 'Mail service experiencing issues';
+            } else if (pageText.includes('mail') && (pageText.includes('degraded') || pageText.includes('slow'))) {
+              status = 'degraded';
+              description = 'Mail service experiencing performance issues';
+            } else if (pageText.includes('all systems operational') || pageText.includes('no incidents')) {
+              status = 'operational';
+              description = 'All systems operational';
+            }
+            
+            return {
+              name: 'zohomail',
+              displayName: 'Zoho Mail',
+              status: status,
+              description: description,
+              lastChecked: new Date().toISOString()
+            };
+          } catch (error) {
+            console.error('Zoho Mail check failed:', error.message);
+            return createErrorStatus('zohomail', 'Zoho Mail');
+          }
+        }
+
+        async function checkMailgunStatus() {
+          try {
+            // Check if Mailgun has an API endpoint (likely uses StatusPage.io)
+            let response;
+            try {
+              response = await axios.get('https://status.mailgun.com/api/v2/status.json', {
+                timeout: 10000
+              });
+              const data = response.data;
+              return {
+                name: 'mailgun',
+                displayName: 'Mailgun',
+                status: mapStatusPageIndicator(data.status.indicator),
+                description: data.status.description,
+                lastChecked: new Date().toISOString()
+              };
+            } catch (apiError) {
+              // Fallback to HTML parsing if API doesn't exist
+              response = await axios.get('https://status.mailgun.com/', {
+                timeout: 15000,
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (compatible; StatusBot/1.0)'
+                }
+              });
+              
+              const $ = cheerio.load(response.data);
+              const pageText = response.data.toLowerCase();
+              
+              let status = 'operational';
+              let description = 'All systems operational';
+              
+              if (pageText.includes('investigating') || pageText.includes('identified')) {
+                status = 'outage';
+                description = 'Service issues detected';
+              } else if (pageText.includes('monitoring') || pageText.includes('degraded')) {
+                status = 'degraded';
+                description = 'Service partially affected';
+              } else if (pageText.includes('all systems operational') || pageText.includes('operational')) {
+                status = 'operational';
+                description = 'All systems operational';
+              }
+              
+              return {
+                name: 'mailgun',
+                displayName: 'Mailgun',
+                status: status,
+                description: description,
+                lastChecked: new Date().toISOString()
+              };
+            }
+          } catch (error) {
+            console.error('Mailgun check failed:', error.message);
+            return createErrorStatus('mailgun', 'Mailgun');
+          }
+        }
+
+        // Helper functions
         function mapStatusPageIndicator(indicator) {
           switch (indicator) {
             case 'none':
@@ -206,29 +340,14 @@ jobs:
           }
         }
 
-        async function main() {
-          console.log('Checking service statuses...');
-          
-          const [confluent, cloudflare, nylas] = await Promise.all([
-            checkConfluentStatus(),
-            checkCloudflareStatus(),
-            checkNylasStatus()
-          ]);
-          
-          const statusData = {
-            services: [confluent, cloudflare, nylas],
-            lastUpdated: new Date().toISOString(),
-            overallStatus: determineOverallStatus([confluent, cloudflare, nylas])
+        function createErrorStatus(name, displayName) {
+          return {
+            name: name,
+            displayName: displayName,
+            status: 'unknown',
+            description: 'Failed to fetch status - check manually',
+            lastChecked: new Date().toISOString()
           };
-          
-          // Write to status.json
-          fs.writeFileSync('status.json', JSON.stringify(statusData, null, 2));
-          
-          console.log('Status check complete:');
-          console.log(`- Confluent: ${confluent.status}`);
-          console.log(`- Cloudflare: ${cloudflare.status}`);
-          console.log(`- Nylas: ${nylas.status}`);
-          console.log(`- Overall: ${statusData.overallStatus}`);
         }
 
         function determineOverallStatus(services) {
@@ -240,6 +359,38 @@ jobs:
           if (hasDegraded) return 'degraded';
           if (hasUnknown) return 'unknown';
           return 'operational';
+        }
+
+        async function main() {
+          console.log('Checking service statuses...');
+          
+          const [confluent, cloudflare, nylas, sendgrid, twilio, postmark, zohomail, mailgun] = await Promise.all([
+            checkConfluentStatus(),
+            checkCloudflareStatus(),
+            checkNylasStatus(),
+            checkSendGridStatus(),
+            checkTwilioStatus(),
+            checkPostmarkStatus(),
+            checkZohoMailStatus(),
+            checkMailgunStatus()
+          ]);
+          
+          const services = [confluent, cloudflare, nylas, sendgrid, twilio, postmark, zohomail, mailgun];
+          
+          const statusData = {
+            services: services,
+            lastUpdated: new Date().toISOString(),
+            overallStatus: determineOverallStatus(services)
+          };
+          
+          // Write to status.json
+          fs.writeFileSync('status.json', JSON.stringify(statusData, null, 2));
+          
+          console.log('Status check complete:');
+          services.forEach(service => {
+            console.log(`- ${service.displayName}: ${service.status}`);
+          });
+          console.log(`- Overall: ${statusData.overallStatus}`);
         }
 
         main().catch(console.error);
