@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
@@ -42,7 +42,7 @@
 
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 24px;
             margin-bottom: 40px;
         }
@@ -66,7 +66,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .service-name {
@@ -75,39 +75,13 @@
             color: #2d3748;
         }
 
-        .dual-status {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        .status-column {
-            background: rgba(248, 250, 252, 0.8);
-            border-radius: 12px;
-            padding: 16px;
-            border: 1px solid rgba(226, 232, 240, 0.5);
-        }
-
-        .status-column h4 {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
         .status-indicator {
-            display: inline-flex;
-            align-items: center;
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
         }
 
         .status-operational {
@@ -141,17 +115,19 @@
             50% { opacity: 0.5; }
         }
 
-        .status-description {
-            font-size: 0.85rem;
-            color: #64748b;
-            line-height: 1.4;
-        }
-
         .service-description {
             color: #718096;
             margin-bottom: 16px;
             line-height: 1.5;
             font-size: 0.95rem;
+        }
+
+        .status-description {
+            color: #64748b;
+            margin-bottom: 16px;
+            line-height: 1.4;
+            font-size: 0.9rem;
+            font-style: italic;
         }
 
         .service-links {
@@ -250,23 +226,17 @@
         }
 
         .legend-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            font-size: 0.9rem;
-        }
-
-        .legend-section h5 {
-            font-weight: 600;
-            color: #4a5568;
-            margin-bottom: 8px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 4px;
             color: #64748b;
+            font-size: 0.9rem;
         }
 
         .legend-dot {
@@ -290,12 +260,9 @@
                 grid-template-columns: 1fr;
             }
 
-            .dual-status {
-                grid-template-columns: 1fr;
-            }
-
             .legend-content {
-                grid-template-columns: 1fr;
+                flex-direction: column;
+                align-items: center;
             }
         }
     </style>
@@ -304,7 +271,7 @@
     <div class="container">
         <div class="header">
             <h1>Service Status Dashboard</h1>
-            <p>Real-time monitoring with official status + community reports</p>
+            <p>Real-time monitoring of critical third-party services</p>
         </div>
 
         <div class="overall-status">
@@ -312,37 +279,23 @@
         </div>
 
         <div class="status-legend">
-            <div class="legend-title">📊 Dual Source Monitoring</div>
+            <div class="legend-title">📊 Service Status Indicators</div>
             <div class="legend-content">
-                <div class="legend-section">
-                    <h5>Official Status</h5>
-                    <div class="legend-item">
-                        <div class="legend-dot dot-operational"></div>
-                        <span>Direct from service APIs</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-dot dot-degraded"></div>
-                        <span>Official maintenance/issues</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-dot dot-outage"></div>
-                        <span>Confirmed outages</span>
-                    </div>
+                <div class="legend-item">
+                    <div class="legend-dot dot-operational"></div>
+                    <span>Operational - Service running normally</span>
                 </div>
-                <div class="legend-section">
-                    <h5>Community Reports</h5>
-                    <div class="legend-item">
-                        <div class="legend-dot dot-operational"></div>
-                        <span>No user-reported issues</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-dot dot-degraded"></div>
-                        <span>Users reporting problems</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-dot dot-outage"></div>
-                        <span>Widespread user reports</span>
-                    </div>
+                <div class="legend-item">
+                    <div class="legend-dot dot-degraded"></div>
+                    <span>Degraded - Partial issues or maintenance</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot dot-outage"></div>
+                    <span>Outage - Service experiencing problems</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot dot-unknown"></div>
+                    <span>Unknown - Unable to determine status</span>
                 </div>
             </div>
         </div>
@@ -400,7 +353,7 @@
             zohomail: {
                 displayName: 'Zoho Mail',
                 description: 'Business email and collaboration platform',
-                statusPage: 'https://zohostatus.com/'
+                statusPage: 'https://status.zoho.com/'
             },
             mailgun: {
                 displayName: 'Mailgun',
@@ -446,44 +399,26 @@
 
         function createServiceCard(service) {
             const config = serviceConfigs[service.name] || {};
-            const officialStatus = service.officialStatus || { status: 'unknown', description: 'No data' };
-            const communityStatus = service.communityStatus || { status: 'unknown', description: 'No data' };
             
             return `
                 <div class="service-card">
                     <div class="service-header">
                         <h3 class="service-name">${service.displayName || config.displayName || service.name}</h3>
-                    </div>
-                    
-                    <div class="dual-status">
-                        <div class="status-column">
-                            <h4>🏢 Official Status</h4>
-                            <div class="status-indicator status-${officialStatus.status}">
-                                ${getStatusText(officialStatus.status)}
-                            </div>
-                            <div class="status-description">
-                                ${officialStatus.description || 'No official status available'}
-                            </div>
-                        </div>
-                        
-                        <div class="status-column">
-                            <h4>👥 Community Reports</h4>
-                            <div class="status-indicator status-${communityStatus.status}">
-                                ${getStatusText(communityStatus.status)}
-                            </div>
-                            <div class="status-description">
-                                ${communityStatus.description || 'No community data available'}
-                            </div>
-                        </div>
+                        <span class="status-indicator status-${service.status}">
+                            ${getStatusText(service.status)}
+                        </span>
                     </div>
                     
                     <p class="service-description">
                         ${config.description || 'Service monitoring in progress...'}
                     </p>
                     
+                    <div class="status-description">
+                        ${service.description || 'No status information available'}
+                    </div>
+                    
                     <div class="service-links">
-                        <a href="${config.statusPage}" target="_blank" class="service-link">Official Status</a>
-                        <a href="https://downdetector.com/status/${service.name}" target="_blank" class="service-link">Community Reports</a>
+                        <a href="${config.statusPage}" target="_blank" class="service-link">Official Status Page</a>
                     </div>
                     
                     <div class="last-checked">
@@ -497,30 +432,25 @@
             const element = document.getElementById('overall-status-text');
             const icon = getStatusIcon(overallStatus);
             
-            // Count issues from both sources
-            const officialIssues = services.filter(s => 
-                s.officialStatus?.status === 'outage' || s.officialStatus?.status === 'degraded'
-            ).length;
-            
-            const communityIssues = services.filter(s => 
-                s.communityStatus?.status === 'outage' || s.communityStatus?.status === 'degraded'
-            ).length;
+            // Count issues
+            const issues = services.filter(s => s.status === 'outage' || s.status === 'degraded').length;
+            const unknowns = services.filter(s => s.status === 'unknown').length;
             
             switch (overallStatus) {
                 case 'operational':
-                    element.innerHTML = `${icon} All systems operational across all sources`;
+                    element.innerHTML = `${icon} All systems operational`;
                     element.style.color = '#22543d';
                     break;
                 case 'degraded':
-                    element.innerHTML = `${icon} Issues detected - Official: ${officialIssues}, Community: ${communityIssues}`;
+                    element.innerHTML = `${icon} ${issues} service${issues !== 1 ? 's' : ''} experiencing issues`;
                     element.style.color = '#9c4221';
                     break;
                 case 'outage':
-                    element.innerHTML = `${icon} Service outages detected - Official: ${officialIssues}, Community: ${communityIssues}`;
+                    element.innerHTML = `${icon} ${issues} service${issues !== 1 ? 's' : ''} experiencing outages`;
                     element.style.color = '#742a2a';
                     break;
                 default:
-                    element.innerHTML = `${icon} System status unknown - check individual services`;
+                    element.innerHTML = `${icon} System status unknown${unknowns > 0 ? ` (${unknowns} services unavailable)` : ''}`;
                     element.style.color = '#4a5568';
                     break;
             }
@@ -572,8 +502,8 @@
                 const fallbackServices = Object.keys(serviceConfigs).map(name => ({
                     name,
                     displayName: serviceConfigs[name].displayName,
-                    officialStatus: { status: 'unknown', description: 'Unable to determine current status' },
-                    communityStatus: { status: 'unknown', description: 'Unable to determine current status' },
+                    status: 'unknown',
+                    description: 'Unable to determine current status',
                     lastChecked: null
                 }));
                 
