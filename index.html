@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -40,45 +40,127 @@
             opacity: 0.9;
         }
 
+        .overall-status {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .overall-status h2 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        .product-section {
+            margin-bottom: 40px;
+        }
+
+        .product-header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .product-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .product-icon {
+            font-size: 1.8rem;
+        }
+
+        .product-description {
+            color: #64748b;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .product-status-summary {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .status-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .summary-operational {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .summary-degraded {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .summary-outage {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
         }
 
         .service-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.2);
             transition: all 0.3s ease;
         }
 
         .service-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
 
         .service-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .service-name {
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             font-weight: 600;
             color: #2d3748;
         }
 
         .status-indicator {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.8rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -116,24 +198,11 @@
         }
 
         .service-description {
-            color: #718096;
-            margin-bottom: 16px;
-            line-height: 1.5;
-            font-size: 0.95rem;
-        }
-
-        .status-description {
             color: #64748b;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             line-height: 1.4;
             font-size: 0.9rem;
             font-style: italic;
-        }
-
-        .service-links {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
         }
 
         .service-link {
@@ -142,7 +211,7 @@
             color: #4299e1;
             text-decoration: none;
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: color 0.2s ease;
         }
 
@@ -153,59 +222,15 @@
         .service-link::after {
             content: '↗';
             margin-left: 4px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
 
         .last-checked {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #a0aec0;
-            margin-top: 12px;
-            padding-top: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
             border-top: 1px solid rgba(226, 232, 240, 0.5);
-        }
-
-        .overall-status {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 30px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .overall-status h2 {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-            color: #2d3748;
-        }
-
-        .status-footer {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
-            margin-top: 20px;
-        }
-
-        .github-link {
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            font-weight: 500;
-            transition: opacity 0.2s ease;
-        }
-
-        .github-link:hover {
-            opacity: 0.8;
-        }
-
-        .error-message {
-            background: #fed7d7;
-            color: #742a2a;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
         }
 
         .status-legend {
@@ -251,6 +276,43 @@
         .dot-outage { background: #742a2a; }
         .dot-unknown { background: #4a5568; }
 
+        .status-footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 30px;
+        }
+
+        .github-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.2s ease;
+        }
+
+        .github-link:hover {
+            opacity: 0.8;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Common services styling */
+        .common-services {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 2px solid #cbd5e0;
+        }
+
+        .common-services .product-title {
+            color: #1a202c;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2rem;
@@ -264,6 +326,10 @@
                 flex-direction: column;
                 align-items: center;
             }
+
+            .product-status-summary {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -271,7 +337,7 @@
     <div class="container">
         <div class="header">
             <h1>Service Status Dashboard</h1>
-            <p>Real-time monitoring of critical third-party services</p>
+            <p>Real-time monitoring across all products and infrastructure</p>
         </div>
 
         <div class="overall-status">
@@ -283,27 +349,80 @@
             <div class="legend-content">
                 <div class="legend-item">
                     <div class="legend-dot dot-operational"></div>
-                    <span>Operational - Service running normally</span>
+                    <span>Operational</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-dot dot-degraded"></div>
-                    <span>Degraded - Partial issues or maintenance</span>
+                    <span>Degraded</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-dot dot-outage"></div>
-                    <span>Outage - Service experiencing problems</span>
+                    <span>Outage</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-dot dot-unknown"></div>
-                    <span>Unknown - Unable to determine status</span>
+                    <span>Unknown</span>
                 </div>
             </div>
         </div>
 
         <div id="error-container"></div>
 
-        <div class="services-grid" id="services-container">
-            <!-- Services will be populated by JavaScript -->
+        <!-- Common Infrastructure Services -->
+        <div class="product-section">
+            <div class="product-header common-services">
+                <div class="product-title">
+                    <span class="product-icon">🏗️</span>
+                    Common Infrastructure
+                </div>
+                <div class="product-description">
+                    Shared services used across all products and platforms
+                </div>
+                <div class="product-status-summary" id="common-status-summary">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="services-grid" id="common-services-container">
+                <!-- Common services will be populated here -->
+            </div>
+        </div>
+
+        <!-- Workplace Product -->
+        <div class="product-section">
+            <div class="product-header">
+                <div class="product-title">
+                    <span class="product-icon">💼</span>
+                    Workplace Product
+                </div>
+                <div class="product-description">
+                    Email automation, messaging, and communication platform services
+                </div>
+                <div class="product-status-summary" id="workplace-status-summary">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="services-grid" id="workplace-services-container">
+                <!-- Workplace services will be populated here -->
+            </div>
+        </div>
+
+        <!-- Asset Product -->
+        <div class="product-section">
+            <div class="product-header">
+                <div class="product-title">
+                    <span class="product-icon">📊</span>
+                    Asset Product
+                </div>
+                <div class="product-description">
+                    Email delivery and business communication services
+                </div>
+                <div class="product-status-summary" id="asset-status-summary">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="services-grid" id="asset-services-container">
+                <!-- Asset services will be populated here -->
+            </div>
         </div>
 
         <div class="status-footer">
@@ -318,46 +437,70 @@
     </div>
 
     <script>
-        // Service configurations for fallback display
-        const serviceConfigs = {
-            confluent: {
-                displayName: 'Confluent Cloud',
-                description: 'Apache Kafka cloud service for real-time data streaming',
-                statusPage: 'https://status.confluent.cloud/'
+        // Product-wise service configurations
+        const productConfig = {
+            common: {
+                title: 'Common Infrastructure',
+                icon: '🏗️',
+                services: ['cloudflare', 'azure']
             },
+            workplace: {
+                title: 'Workplace Product', 
+                icon: '💼',
+                services: ['nylas', 'confluent', 'sendgrid', 'twilio']
+            },
+            asset: {
+                title: 'Asset Product',
+                icon: '📊', 
+                services: ['postmark', 'zohomail', 'mailgun']
+            }
+        };
+
+        // Service configurations
+        const serviceConfigs = {
             cloudflare: {
                 displayName: 'Cloudflare',
-                description: 'Web performance and security platform',
+                description: 'CDN, security, and performance platform',
                 statusPage: 'https://www.cloudflarestatus.com/'
+            },
+            azure: {
+                displayName: 'Azure Services',
+                description: 'Microsoft Azure cloud platform services',
+                statusPage: 'https://status.azure.com/'
+            },
+            confluent: {
+                displayName: 'Confluent Cloud',
+                description: 'Apache Kafka streaming platform',
+                statusPage: 'https://status.confluent.cloud/'
             },
             nylas: {
                 displayName: 'Nylas',
-                description: 'Email, calendar, and contacts API platform',
+                description: 'Email, calendar, and contacts API',
                 statusPage: 'https://status-v3.nylas.com/'
             },
             sendgrid: {
                 displayName: 'SendGrid',
-                description: 'Twilio SendGrid email delivery platform',
+                description: 'Email delivery platform',
                 statusPage: 'https://status.sendgrid.com/'
             },
             twilio: {
                 displayName: 'Twilio Communications',
-                description: 'Communications platform for SMS, voice, and messaging',
+                description: 'SMS, voice, and messaging APIs',
                 statusPage: 'https://status.twilio.com/'
             },
             postmark: {
                 displayName: 'Postmark',
-                description: 'Transactional email service for applications',
+                description: 'Transactional email service',
                 statusPage: 'https://status.postmarkapp.com/'
             },
             zohomail: {
                 displayName: 'Zoho Mail',
-                description: 'Business email and collaboration platform',
+                description: 'Business email platform',
                 statusPage: 'https://status.zoho.com/'
             },
             mailgun: {
                 displayName: 'Mailgun',
-                description: 'Email automation service for developers',
+                description: 'Email automation service',
                 statusPage: 'https://status.mailgun.com/'
             }
         };
@@ -409,17 +552,11 @@
                         </span>
                     </div>
                     
-                    <p class="service-description">
-                        ${config.description || 'Service monitoring in progress...'}
-                    </p>
-                    
-                    <div class="status-description">
+                    <div class="service-description">
                         ${service.description || 'No status information available'}
                     </div>
                     
-                    <div class="service-links">
-                        <a href="${config.statusPage}" target="_blank" class="service-link">Official Status Page</a>
-                    </div>
+                    <a href="${config.statusPage}" target="_blank" class="service-link">View Status Page</a>
                     
                     <div class="last-checked">
                         Last checked: ${service.lastChecked ? formatRelativeTime(service.lastChecked) : 'Never'}
@@ -428,17 +565,42 @@
             `;
         }
 
-        function updateOverallStatus(overallStatus, services) {
+        function createProductStatusSummary(services) {
+            const statusCounts = {
+                operational: services.filter(s => s.status === 'operational').length,
+                degraded: services.filter(s => s.status === 'degraded').length,
+                outage: services.filter(s => s.status === 'outage').length,
+                unknown: services.filter(s => s.status === 'unknown').length
+            };
+
+            const summaryItems = [];
+            
+            if (statusCounts.operational > 0) {
+                summaryItems.push(`<span class="status-summary-item summary-operational">🟢 ${statusCounts.operational} Operational</span>`);
+            }
+            if (statusCounts.degraded > 0) {
+                summaryItems.push(`<span class="status-summary-item summary-degraded">🟡 ${statusCounts.degraded} Degraded</span>`);
+            }
+            if (statusCounts.outage > 0) {
+                summaryItems.push(`<span class="status-summary-item summary-outage">🔴 ${statusCounts.outage} Outage</span>`);
+            }
+            if (statusCounts.unknown > 0) {
+                summaryItems.push(`<span class="status-summary-item">⚪ ${statusCounts.unknown} Unknown</span>`);
+            }
+
+            return summaryItems.join('');
+        }
+
+        function updateOverallStatus(overallStatus, allServices) {
             const element = document.getElementById('overall-status-text');
             const icon = getStatusIcon(overallStatus);
             
-            // Count issues
-            const issues = services.filter(s => s.status === 'outage' || s.status === 'degraded').length;
-            const unknowns = services.filter(s => s.status === 'unknown').length;
+            const issues = allServices.filter(s => s.status === 'outage' || s.status === 'degraded').length;
+            const unknowns = allServices.filter(s => s.status === 'unknown').length;
             
             switch (overallStatus) {
                 case 'operational':
-                    element.innerHTML = `${icon} All systems operational`;
+                    element.innerHTML = `${icon} All systems operational across all products`;
                     element.style.color = '#22543d';
                     break;
                 case 'degraded':
@@ -474,8 +636,7 @@
             try {
                 clearError();
                 
-                // Try to load status.json generated by GitHub Actions
-                const response = await fetch('./status.json?' + Date.now()); // Cache buster
+                const response = await fetch('./status.json?' + Date.now());
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -483,10 +644,36 @@
                 
                 const data = await response.json();
                 
-                // Update services
-                const servicesContainer = document.getElementById('services-container');
-                servicesContainer.innerHTML = data.services.map(createServiceCard).join('');
-                
+                // Group services by product
+                const servicesByProduct = {
+                    common: [],
+                    workplace: [],
+                    asset: []
+                };
+
+                data.services.forEach(service => {
+                    for (const [productKey, productInfo] of Object.entries(productConfig)) {
+                        if (productInfo.services.includes(service.name)) {
+                            servicesByProduct[productKey].push(service);
+                            break;
+                        }
+                    }
+                });
+
+                // Update each product section
+                Object.entries(servicesByProduct).forEach(([productKey, services]) => {
+                    const container = document.getElementById(`${productKey}-services-container`);
+                    const summaryContainer = document.getElementById(`${productKey}-status-summary`);
+                    
+                    if (container && services.length > 0) {
+                        container.innerHTML = services.map(createServiceCard).join('');
+                    }
+                    
+                    if (summaryContainer && services.length > 0) {
+                        summaryContainer.innerHTML = createProductStatusSummary(services);
+                    }
+                });
+
                 // Update overall status
                 updateOverallStatus(data.overallStatus, data.services);
                 
@@ -498,19 +685,27 @@
                 console.error('Failed to load status:', error);
                 showError(`Failed to load status data: ${error.message}`);
                 
-                // Show fallback cards
-                const fallbackServices = Object.keys(serviceConfigs).map(name => ({
-                    name,
-                    displayName: serviceConfigs[name].displayName,
-                    status: 'unknown',
-                    description: 'Unable to determine current status',
-                    lastChecked: null
-                }));
-                
-                const servicesContainer = document.getElementById('services-container');
-                servicesContainer.innerHTML = fallbackServices.map(createServiceCard).join('');
-                
-                updateOverallStatus('unknown', fallbackServices);
+                // Show fallback cards for each product
+                Object.entries(productConfig).forEach(([productKey, productInfo]) => {
+                    const container = document.getElementById(`${productKey}-services-container`);
+                    const summaryContainer = document.getElementById(`${productKey}-status-summary`);
+                    
+                    const fallbackServices = productInfo.services.map(serviceName => ({
+                        name: serviceName,
+                        displayName: serviceConfigs[serviceName]?.displayName || serviceName,
+                        status: 'unknown',
+                        description: 'Unable to determine current status',
+                        lastChecked: null
+                    }));
+                    
+                    if (container) {
+                        container.innerHTML = fallbackServices.map(createServiceCard).join('');
+                    }
+                    
+                    if (summaryContainer) {
+                        summaryContainer.innerHTML = createProductStatusSummary(fallbackServices);
+                    }
+                });
             }
         }
 
