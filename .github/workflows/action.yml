@@ -220,9 +220,12 @@ jobs:
               const response = await axios.get('https://status.postmarkapp.com/api/v1/page');
               const data = response.data;
               
+              console.log('Postmark API response:', JSON.stringify(data, null, 2));
+              
               let status = 'operational';
               let description = data.page?.state_text || 'All systems operational';
               
+              // Check the page state from Sorry API
               switch (data.page?.state) {
                 case 'operational':
                   status = 'operational';
@@ -234,8 +237,13 @@ jobs:
                   status = 'degraded';
                   description = 'Scheduled maintenance in progress';
                   break;
+                case 'outage':
+                  status = 'outage';
+                  break;
                 default:
+                  // If state is not recognized, default to operational
                   status = 'operational';
+                  description = 'All systems operational';
                   break;
               }
               
@@ -253,8 +261,22 @@ jobs:
               const response = await axios.get('https://status.postmarkapp.com/');
               const $ = cheerio.load(response.data);
               const pageText = response.data.toLowerCase();
+              const pageTitle = $('title').text().toLowerCase();
               
-              if (pageText.includes('investigating') || pageText.includes('identified')) {
+              console.log('Postmark page title:', pageTitle);
+              
+              // Check page title and content for status indicators
+              if (pageTitle.includes('all systems are go') || 
+                  pageTitle.includes('operational') ||
+                  pageText.includes('all systems are go')) {
+                return {
+                  name: 'postmark',
+                  displayName: 'Postmark',
+                  status: 'operational',
+                  description: 'All systems are go!',
+                  lastChecked: new Date().toISOString()
+                };
+              } else if (pageText.includes('investigating') || pageText.includes('identified')) {
                 return {
                   name: 'postmark',
                   displayName: 'Postmark',
@@ -272,11 +294,12 @@ jobs:
                 };
               }
               
+              // Default to operational if we can load the page
               return {
                 name: 'postmark',
                 displayName: 'Postmark',
                 status: 'operational',
-                description: 'All systems operational',
+                description: 'Status page accessible',
                 lastChecked: new Date().toISOString()
               };
             }
