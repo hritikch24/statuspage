@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Status Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .service-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .service-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .service-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .service-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .status-indicator {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-operational {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-degraded {
+            background: #fed7aa;
+            color: #9c4221;
+        }
+
+        .status-outage {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .status-loading {
+            background: #e2e8f0;
+            color: #4a5568;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .service-description {
+            color: #718096;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .service-link {
+            display: inline-flex;
+            align-items: center;
+            color: #4299e1;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .service-link:hover {
+            color: #2b6cb0;
+        }
+
+        .service-link::after {
+            content: '↗';
+            margin-left: 4px;
+            font-size: 0.9rem;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+
+        .overall-status {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .overall-status h2 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Service Status Dashboard</h1>
+            <p>Monitor the health of your critical third-party services</p>
+        </div>
+
+        <div class="overall-status">
+            <h2 id="overall-status-text">Checking system status...</h2>
+        </div>
+
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-header">
+                    <h3 class="service-name">Confluent Cloud</h3>
+                    <span class="status-indicator status-loading" id="confluent-status">Loading...</span>
+                </div>
+                <p class="service-description">Apache Kafka cloud service for real-time data streaming</p>
+                <a href="https://status.confluent.cloud/" target="_blank" class="service-link">View Status Page</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-header">
+                    <h3 class="service-name">Cloudflare</h3>
+                    <span class="status-indicator status-loading" id="cloudflare-status">Loading...</span>
+                </div>
+                <p class="service-description">Web performance and security platform</p>
+                <a href="https://www.cloudflarestatus.com/" target="_blank" class="service-link">View Status Page</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-header">
+                    <h3 class="service-name">Nylas</h3>
+                    <span class="status-indicator status-loading" id="nylas-status">Loading...</span>
+                </div>
+                <p class="service-description">Email, calendar, and contacts API platform</p>
+                <a href="https://status-v3.nylas.com/" target="_blank" class="service-link">View Status Page</a>
+            </div>
+        </div>
+
+        <div class="last-updated">
+            Last updated: <span id="last-updated-time">Never</span>
+        </div>
+    </div>
+
+    <script>
+        // Service configurations
+        const services = [
+            {
+                name: 'confluent',
+                displayName: 'Confluent Cloud',
+                statusPage: 'https://status.confluent.cloud/',
+                // Using a CORS proxy for demo - in production, you'd want your own backend
+                apiUrl: 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://status.confluent.cloud/api/v2/status.json')
+            },
+            {
+                name: 'cloudflare',
+                displayName: 'Cloudflare',
+                statusPage: 'https://www.cloudflarestatus.com/',
+                apiUrl: 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://www.cloudflarestatus.com/api/v2/status.json')
+            },
+            {
+                name: 'nylas',
+                displayName: 'Nylas',
+                statusPage: 'https://status-v3.nylas.com/',
+                apiUrl: 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://status-v3.nylas.com/api/v2/status.json')
+            }
+        ];
+
+        // Status checking functions
+        async function checkServiceStatus(service) {
+            try {
+                const response = await fetch(service.apiUrl);
+                const data = await response.json();
+                
+                // Parse the JSON content from the proxy response
+                const statusData = JSON.parse(data.contents);
+                
+                return {
+                    name: service.name,
+                    status: mapStatus(statusData.status.indicator),
+                    description: statusData.status.description
+                };
+            } catch (error) {
+                console.error(`Error checking ${service.name}:`, error);
+                return {
+                    name: service.name,
+                    status: 'unknown',
+                    description: 'Unable to fetch status'
+                };
+            }
+        }
+
+        function mapStatus(indicator) {
+            switch (indicator) {
+                case 'none':
+                    return 'operational';
+                case 'minor':
+                    return 'degraded';
+                case 'major':
+                case 'critical':
+                    return 'outage';
+                default:
+                    return 'unknown';
+            }
+        }
+
+        function updateStatusIndicator(serviceName, status, description) {
+            const element = document.getElementById(`${serviceName}-status`);
+            element.className = `status-indicator status-${status}`;
+            
+            switch (status) {
+                case 'operational':
+                    element.textContent = 'Operational';
+                    break;
+                case 'degraded':
+                    element.textContent = 'Degraded';
+                    break;
+                case 'outage':
+                    element.textContent = 'Outage';
+                    break;
+                default:
+                    element.textContent = 'Unknown';
+                    break;
+            }
+            
+            element.title = description;
+        }
+
+        function updateOverallStatus(statuses) {
+            const overallElement = document.getElementById('overall-status-text');
+            const hasOutage = statuses.some(s => s.status === 'outage');
+            const hasDegraded = statuses.some(s => s.status === 'degraded');
+            
+            if (hasOutage) {
+                overallElement.textContent = '🔴 Some services are experiencing outages';
+                overallElement.style.color = '#742a2a';
+            } else if (hasDegraded) {
+                overallElement.textContent = '🟡 Some services are experiencing issues';
+                overallElement.style.color = '#9c4221';
+            } else {
+                overallElement.textContent = '🟢 All systems operational';
+                overallElement.style.color = '#22543d';
+            }
+        }
+
+        async function checkAllServices() {
+            const statusPromises = services.map(service => checkServiceStatus(service));
+            const statuses = await Promise.all(statusPromises);
+            
+            statuses.forEach(status => {
+                updateStatusIndicator(status.name, status.status, status.description);
+            });
+            
+            updateOverallStatus(statuses);
+            
+            // Update last updated time
+            document.getElementById('last-updated-time').textContent = new Date().toLocaleString();
+        }
+
+        // Auto-refresh functionality
+        function startAutoRefresh() {
+            // Check immediately
+            checkAllServices();
+            
+            // Then check every 5 minutes
+            setInterval(checkAllServices, 5 * 60 * 1000);
+        }
+
+        // Start the status checking when page loads
+        window.addEventListener('load', startAutoRefresh);
+    </script>
+</body>
+</html>
