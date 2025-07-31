@@ -1,5 +1,5 @@
 # .github/workflows/update-status.yml
-name: Update Service Status
+name: Update Service Status with Teams Alerts
 
 on:
   schedule:
@@ -29,9 +29,11 @@ jobs:
         npm init -y
         npm install cheerio axios
     
-    - name: Check service statuses
+    - name: Check service statuses and send alerts
+      env:
+        TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
       run: |
-        cat > check-status.js << 'EOF'
+        cat > check-status-with-alerts.js << 'EOF'
         const axios = require('axios');
         const cheerio = require('cheerio');
         const fs = require('fs');
@@ -39,6 +41,9 @@ jobs:
         // Configure axios with better defaults
         axios.defaults.timeout = 15000;
         axios.defaults.headers['User-Agent'] = 'Mozilla/5.0 (compatible; StatusBot/1.0)';
+
+        // Teams webhook URL from environment
+        const TEAMS_WEBHOOK_URL = process.env.TEAMS_WEBHOOK_URL;
 
         // Helper functions
         function mapStatusPageIndicator(indicator) {
@@ -65,7 +70,161 @@ jobs:
           };
         }
 
-        // Service check functions
+        // Teams notification functions
+        function getStatusColor(status) {
+          switch (status) {
+            case 'operational': return 'Good';
+            case 'degraded': return 'Warning';
+            case 'outage': return 'Attention';
+            default: return 'Default';
+          }
+        }
+
+        function getStatusEmoji(status) {
+          switch (status) {
+            case 'operational': return '🟢';
+            case 'degraded': return '🟡';
+            case 'outage': return '🔴';
+            default: return '⚪';
+          }
+        }
+
+        async function sendTeamsAlert(type, service, oldStatus = null) {
+          if (!TEAMS_WEBHOOK_URL) {
+            console.log('No Teams webhook URL configured, skipping alert');
+            return;
+          }
+
+          let title, text, color, activity;
+
+          if (type === 'down') {
+            title = `🚨 Service Alert: ${service.displayName}`;
+            text = `**${service.displayName}** is experiencing issues`;
+            color = getStatusColor(service.status);
+            activity = {
+              activityTitle: 'Service Status Change',
+              activitySubtitle: `${oldStatus} → ${service.status}`,
+              activityImage: 'https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets/Alert/SVG/ic_fluent_alert_24_filled.svg'
+            };
+          } else if (type === 'recovered') {
+            title = `✅ Service Recovered: ${service.displayName}`;
+            text = `**${service.displayName}** is back to normal`;
+            color = 'Good';
+            activity = {
+              activityTitle: 'Service Recovery',
+              activitySubtitle: `${oldStatus} → ${service.status}`,
+              activityImage: 'https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets/Checkmark/SVG/ic_fluent_checkmark_24_filled.svg'
+            };
+          } else if (type === 'summary') {
+            const issueCount = service.issueCount || 0;
+            const totalServices = service.totalServices || 0;
+            
+            if (issueCount === 0) {
+              title = '✅ All Systems Operational';
+              text = `All ${totalServices} monitored services are running normally`;
+              color = 'Good';
+            } else {
+              title = `⚠️ Service Issues Detected`;
+              text = `${issueCount} out of ${totalServices} services experiencing issues`;
+              color = 'Warning';
+            }
+            
+            activity = {
+              activityTitle: 'Status Summary',
+              activitySubtitle: new Date().toLocaleString(),
+              activityImage: 'https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets/Status/SVG/ic_fluent_status_24_filled.svg'
+            };
+          }
+
+          const teamsMessage = {
+            "@type": "MessageCard",
+            "@context": "https://schema.org/extensions",
+            "summary": title,
+            "themeColor": color === 'Good' ? '28a745' : color === 'Warning' ? 'ffc107' : 'dc3545',
+            "sections": [
+              {
+                "activityTitle": title,
+                "activitySubtitle": new Date().toLocaleString('en-US', {
+                  timeZone: 'UTC',
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZoneName: 'short'
+                }),
+                "activityImage": "https://img.icons8.com/fluency/48/000000/server.png",
+                "facts": type !== 'summary' ? [
+                  {
+                    "name": "Service",
+                    "value": service.displayName
+                  },
+                  {
+                    "name": "Status",
+                    "value": `${getStatusEmoji(service.status)} ${service.status.charAt(0).toUpperCase() + service.status.slice(1)}`
+                  },
+                  {
+                    "name": "Description",
+                    "value": service.description || 'No additional details available'
+                  }
+                ] : [
+                  {
+                    "name": "Services Monitored",
+                    "value": service.totalServices.toString()
+                  },
+                  {
+                    "name": "Issues Detected",
+                    "value": service.issueCount.toString()
+                  },
+                  {
+                    "name": "Last Updated",
+                    "value": new Date().toLocaleString()
+                  }
+                ],
+                "text": text
+              }
+            ],
+            "potentialAction": [
+              {
+                "@type": "OpenUri",
+                "name": type !== 'summary' ? "View Status Page" : "View Full Dashboard",
+                "targets": [
+                  {
+                    "os": "default",
+                    "uri": type !== 'summary' ? 
+                      getStatusPageUrl(service.name) : 
+                      "https://hritikch24.github.io/statuspage/"
+                  }
+                ]
+              }
+            ]
+          };
+
+          try {
+            await axios.post(TEAMS_WEBHOOK_URL, teamsMessage, {
+              headers: { 'Content-Type': 'application/json' }
+            });
+            console.log(`Teams alert sent: ${title}`);
+          } catch (error) {
+            console.error('Failed to send Teams alert:', error.message);
+          }
+        }
+
+        function getStatusPageUrl(serviceName) {
+          const urls = {
+            confluent: 'https://status.confluent.cloud/',
+            cloudflare: 'https://www.cloudflarestatus.com/',
+            nylas: 'https://status-v3.nylas.com/',
+            sendgrid: 'https://status.sendgrid.com/',
+            twilio: 'https://status.twilio.com/',
+            postmark: 'https://status.postmarkapp.com/',
+            zohomail: 'https://status.zoho.com/',
+            mailgun: 'https://status.mailgun.com/'
+          };
+          return urls[serviceName] || 'https://hritikch24.github.io/statuspage/';
+        }
+
+        // Service check functions (same as before)
         async function checkConfluentStatus() {
           console.log('Checking Confluent Cloud...');
           try {
@@ -109,7 +268,6 @@ jobs:
             
             console.log('Nylas: Analyzing official status page...');
             
-            // More aggressive detection for current issues
             const currentIncidentKeywords = [
               'investigating -', 'investigating:', 
               'identified -', 'identified:',
@@ -140,7 +298,6 @@ jobs:
               }
             }
             
-            // Check for monitoring status
             if (pageText.includes('monitoring -') || pageText.includes('monitoring:')) {
               return {
                 name: 'nylas',
@@ -151,7 +308,6 @@ jobs:
               };
             }
             
-            // Check for very recent activity (last 3 days)
             const recentDates = ['jul 31', 'jul 30', 'jul 29', 'july 31', 'july 30', 'july 29'];
             const hasRecentActivity = recentDates.some(date => pageText.includes(date));
             
@@ -215,7 +371,6 @@ jobs:
         async function checkPostmarkStatus() {
           console.log('Checking Postmark...');
           try {
-            // Try the Sorry API first
             try {
               const response = await axios.get('https://status.postmarkapp.com/api/v1/page');
               const data = response.data;
@@ -225,7 +380,6 @@ jobs:
               let status = 'operational';
               let description = data.page?.state_text || 'All systems operational';
               
-              // Check the page state from Sorry API
               switch (data.page?.state) {
                 case 'operational':
                   status = 'operational';
@@ -241,7 +395,6 @@ jobs:
                   status = 'outage';
                   break;
                 default:
-                  // If state is not recognized, default to operational
                   status = 'operational';
                   description = 'All systems operational';
                   break;
@@ -257,7 +410,6 @@ jobs:
             } catch (apiError) {
               console.log('Postmark API failed, trying HTML:', apiError.message);
               
-              // Fallback to HTML parsing
               const response = await axios.get('https://status.postmarkapp.com/');
               const $ = cheerio.load(response.data);
               const pageText = response.data.toLowerCase();
@@ -265,7 +417,6 @@ jobs:
               
               console.log('Postmark page title:', pageTitle);
               
-              // Check page title and content for status indicators
               if (pageTitle.includes('all systems are go') || 
                   pageTitle.includes('operational') ||
                   pageText.includes('all systems are go')) {
@@ -294,7 +445,6 @@ jobs:
                 };
               }
               
-              // Default to operational if we can load the page
               return {
                 name: 'postmark',
                 displayName: 'Postmark',
@@ -317,11 +467,9 @@ jobs:
             
             console.log('Zoho API response:', JSON.stringify(data, null, 2));
             
-            // Parse Zoho's API response format
             let status = 'operational';
             let description = 'All systems operational';
             
-            // Check if there's any issue data in the response
             if (data.result && Array.isArray(data.result)) {
               const mailIssues = data.result.filter(item => 
                 item.name && item.name.toLowerCase().includes('mail')
@@ -349,7 +497,6 @@ jobs:
               }
             }
             
-            // If no specific structure, check overall status
             if (data.status) {
               switch (data.status.toLowerCase()) {
                 case 'down':
@@ -385,7 +532,6 @@ jobs:
         async function checkMailgunStatus() {
           console.log('Checking Mailgun...');
           try {
-            // Try API first
             try {
               const response = await axios.get('https://status.mailgun.com/api/v2/status.json');
               return {
@@ -398,7 +544,6 @@ jobs:
             } catch (apiError) {
               console.log('Mailgun API failed, trying HTML:', apiError.message);
               
-              // Fallback to HTML parsing
               const response = await axios.get('https://status.mailgun.com/');
               const pageText = response.data.toLowerCase();
               
@@ -445,8 +590,28 @@ jobs:
           return 'operational';
         }
 
+        // Load previous status for comparison
+        function loadPreviousStatus() {
+          try {
+            if (fs.existsSync('status.json')) {
+              const data = JSON.parse(fs.readFileSync('status.json', 'utf8'));
+              const previousStatus = {};
+              data.services.forEach(service => {
+                previousStatus[service.name] = service.status;
+              });
+              return { previousStatus, previousOverallStatus: data.overallStatus };
+            }
+          } catch (error) {
+            console.log('No previous status found or error reading:', error.message);
+          }
+          return { previousStatus: {}, previousOverallStatus: null };
+        }
+
         async function main() {
-          console.log('=== Starting service status checks (Official sources only) ===');
+          console.log('=== Starting service status checks with Teams alerts ===');
+          
+          // Load previous status for comparison
+          const { previousStatus, previousOverallStatus } = loadPreviousStatus();
           
           const services = await Promise.all([
             checkConfluentStatus(),
@@ -459,31 +624,76 @@ jobs:
             checkMailgunStatus()
           ]);
           
+          const currentOverallStatus = determineOverallStatus(services);
+          
           const statusData = {
             services: services,
             lastUpdated: new Date().toISOString(),
-            overallStatus: determineOverallStatus(services)
+            overallStatus: currentOverallStatus
           };
+          
+          // Check for status changes and send alerts
+          let alertsSent = 0;
+          const changedServices = [];
+          
+          for (const service of services) {
+            const previousServiceStatus = previousStatus[service.name];
+            
+            if (previousServiceStatus && previousServiceStatus !== service.status) {
+              console.log(`Status change detected for ${service.displayName}: ${previousServiceStatus} → ${service.status}`);
+              changedServices.push({ service, oldStatus: previousServiceStatus });
+              
+              // Send alert for status change
+              if (service.status === 'outage' || service.status === 'degraded') {
+                await sendTeamsAlert('down', service, previousServiceStatus);
+                alertsSent++;
+              } else if (service.status === 'operational' && 
+                        (previousServiceStatus === 'outage' || previousServiceStatus === 'degraded')) {
+                await sendTeamsAlert('recovered', service, previousServiceStatus);
+                alertsSent++;
+              }
+              
+              // Small delay between alerts to avoid rate limiting
+              if (alertsSent > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            }
+          }
+          
+          // Send summary alert if there are current issues (once per hour)
+          const currentHour = new Date().getHours();
+          const shouldSendSummary = currentHour % 2 === 0 && new Date().getMinutes() < 10; // Every 2 hours during first 10 minutes
+          
+          if (shouldSendSummary) {
+            const currentIssues = services.filter(s => s.status === 'outage' || s.status === 'degraded');
+            if (currentIssues.length > 0 || currentOverallStatus !== 'operational') {
+              await sendTeamsAlert('summary', {
+                issueCount: currentIssues.length,
+                totalServices: services.length
+              });
+            }
+          }
           
           // Write to status.json
           fs.writeFileSync('status.json', JSON.stringify(statusData, null, 2));
           
           console.log('=== Status check complete ===');
           services.forEach(service => {
-            console.log(`- ${service.displayName}: ${service.status} - ${service.description}`);
+            const changeIndicator = previousStatus[service.name] && previousStatus[service.name] !== service.status ? ' (CHANGED)' : '';
+            console.log(`- ${service.displayName}: ${service.status}${changeIndicator} - ${service.description}`);
           });
           console.log(`- Overall: ${statusData.overallStatus}`);
+          console.log(`- Alerts sent: ${alertsSent}`);
         }
 
         main().catch(console.error);
         EOF
         
-        node check-status.js
+        node check-status-with-alerts.js
     
     - name: Commit and push status update
       run: |
         git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
         git config --local user.name "GitHub Action"
         git add status.json
         if git diff --staged --quiet; then
