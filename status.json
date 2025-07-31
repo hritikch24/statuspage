@@ -3,108 +3,60 @@
     {
       "name": "confluent",
       "displayName": "Confluent Cloud",
-      "officialStatus": {
-        "status": "operational",
-        "description": "All Systems Operational"
-      },
-      "communityStatus": {
-        "status": "operational",
-        "description": "Community status unavailable"
-      },
-      "lastChecked": "2025-07-31T07:58:36.788Z"
+      "status": "operational",
+      "description": "All Systems Operational",
+      "lastChecked": "2025-07-31T08:10:06.857Z"
     },
     {
       "name": "cloudflare",
       "displayName": "Cloudflare",
-      "officialStatus": {
-        "status": "degraded",
-        "description": "Minor Service Outage"
-      },
-      "communityStatus": {
-        "status": "operational",
-        "description": "Community status unavailable"
-      },
-      "lastChecked": "2025-07-31T07:58:36.668Z"
+      "status": "degraded",
+      "description": "Minor Service Outage",
+      "lastChecked": "2025-07-31T08:10:06.855Z"
     },
     {
       "name": "nylas",
       "displayName": "Nylas",
-      "officialStatus": {
-        "status": "degraded",
-        "description": "Active service issues detected"
-      },
-      "communityStatus": {
-        "status": "operational",
-        "description": "Community status unavailable"
-      },
-      "lastChecked": "2025-07-31T07:58:36.790Z"
+      "status": "degraded",
+      "description": "Active service issues detected",
+      "lastChecked": "2025-07-31T08:10:07.224Z"
     },
     {
       "name": "sendgrid",
       "displayName": "SendGrid",
-      "officialStatus": {
-        "status": "operational",
-        "description": "All Systems Operational"
-      },
-      "communityStatus": {
-        "status": "operational",
-        "description": "Community status unavailable"
-      },
-      "lastChecked": "2025-07-31T07:58:36.799Z"
+      "status": "operational",
+      "description": "All Systems Operational",
+      "lastChecked": "2025-07-31T08:10:06.896Z"
     },
     {
       "name": "twilio",
       "displayName": "Twilio Communications",
-      "officialStatus": {
-        "status": "degraded",
-        "description": "Partially Degraded Service"
-      },
-      "communityStatus": {
-        "status": "operational",
-        "description": "Community status unavailable"
-      },
-      "lastChecked": "2025-07-31T07:58:36.660Z"
+      "status": "degraded",
+      "description": "Partially Degraded Service",
+      "lastChecked": "2025-07-31T08:10:07.053Z"
     },
     {
       "name": "postmark",
       "displayName": "Postmark",
-      "officialStatus": {
-        "status": "degraded",
-        "description": "Service partially affected"
-      },
-      "communityStatus": {
-        "status": "operational",
-        "description": "Community status unavailable"
-      },
-      "lastChecked": "2025-07-31T07:58:37.149Z"
+      "status": "degraded",
+      "description": "Service partially affected",
+      "lastChecked": "2025-07-31T08:10:07.488Z"
     },
     {
       "name": "zohomail",
       "displayName": "Zoho Mail",
-      "officialStatus": {
-        "status": "unknown",
-        "description": "Official page unavailable"
-      },
-      "communityStatus": {
-        "status": "operational",
-        "description": "Community status unavailable"
-      },
-      "lastChecked": "2025-07-31T07:58:36.788Z"
+      "status": "operational",
+      "description": "All systems operational",
+      "lastChecked": "2025-07-31T08:10:07.547Z"
     },
     {
       "name": "mailgun",
       "displayName": "Mailgun",
-      "officialStatus": {
-        "status": "operational",
-        "description": "All Systems Operational"
-      },
-      "communityStatus": {
-        "status": "operational",
-        "description": "Community status unavailable"
-      },
-      "lastChecked": "2025-07-31T07:58:36.757Z"
+      "status": "operational",
+      "description": "All Systems Operational",
+      "lastChecked": "2025-07-31T08:10:07.333Z"
     }
   ],
-  "lastUpdated": "2025-07-31T07:58:37.149Z",
+  "lastUpdated": "2025-07-31T08:10:07.547Z",
   "overallStatus": "degraded"
 }
