@@ -5,65 +5,65 @@
       "displayName": "Cloudflare",
       "status": "degraded",
       "description": "Minor Service Outage",
-      "lastChecked": "2025-11-13T13:20:59.306Z"
+      "lastChecked": "2025-11-13T13:48:54.957Z"
     },
     {
       "name": "azure",
       "displayName": "Azure Services",
-      "status": "degraded",
-      "description": "Issues detected: status, health, service, openai, government, china, region, compute, vmware, center, functions, vm, quantum, spring, virtual, dedicated, large, deployment, bastion, firewall, network, peering, communications, dns, expressroute, front, internet, orbital, private, programmable, route, nat, hpc, managed, netapp, file, communication, fluid, ai, signalr, web, container, kubernetes, dev, red, sql, cosmos, database, cache, analysis, data, databricks, stream, synapse, video, machine, open, maps, sphere, digital, iot, time, api, ad, active, attestation, confidential, ddos, information, key, devops, artifacts, boards, pipelines, repos, test, devtest, load, advisor, automanage, lighthouse, mobile, policy, portal, resource, backup, blueprints, chaos, monitor, site, update, migrate, stack, arc, operator",
-      "lastChecked": "2025-11-13T13:21:00.733Z"
+      "status": "outage",
+      "description": "Major incident affecting multiple services",
+      "lastChecked": "2025-11-13T13:48:50.112Z"
     },
     {
       "name": "confluent",
       "displayName": "Confluent Cloud",
       "status": "operational",
       "description": "All Systems Operational",
-      "lastChecked": "2025-11-13T13:21:02.302Z"
+      "lastChecked": "2025-11-13T13:48:57.738Z"
     },
     {
       "name": "nylas",
       "displayName": "Nylas",
       "status": "operational",
       "description": "No active incidents detected",
-      "lastChecked": "2025-11-13T13:20:59.568Z"
+      "lastChecked": "2025-11-13T13:48:59.380Z"
     },
     {
       "name": "sendgrid",
       "displayName": "SendGrid",
       "status": "operational",
       "description": "All Systems Operational",
-      "lastChecked": "2025-11-13T13:20:59.378Z"
+      "lastChecked": "2025-11-13T13:48:48.980Z"
     },
     {
       "name": "twilio",
       "displayName": "Twilio Communications",
       "status": "degraded",
       "description": "Partially Degraded Service",
-      "lastChecked": "2025-11-13T13:20:59.497Z"
+      "lastChecked": "2025-11-13T13:48:48.982Z"
     },
     {
       "name": "postmark",
       "displayName": "Postmark",
       "status": "operational",
       "description": "All systems operational",
-      "lastChecked": "2025-11-13T13:21:00.742Z"
+      "lastChecked": "2025-11-13T13:48:49.138Z"
     },
     {
       "name": "zohomail",
       "displayName": "Zoho Mail",
       "status": "operational",
       "description": "All systems operational",
-      "lastChecked": "2025-11-13T13:21:00.943Z"
+      "lastChecked": "2025-11-13T13:48:50.238Z"
     },
     {
       "name": "mailgun",
       "displayName": "Mailgun",
       "status": "operational",
       "description": "All Systems Operational",
-      "lastChecked": "2025-11-13T13:20:59.761Z"
+      "lastChecked": "2025-11-13T13:48:49.269Z"
     }
   ],
-  "lastUpdated": "2025-11-13T13:21:02.302Z",
-  "overallStatus": "degraded"
+  "lastUpdated": "2025-11-13T13:48:59.380Z",
+  "overallStatus": "outage"
 }
