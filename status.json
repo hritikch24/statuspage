@@ -5,65 +5,65 @@
       "displayName": "Cloudflare",
       "status": "degraded",
       "description": "Minor Service Outage",
-      "lastChecked": "2026-05-14T21:56:52.197Z"
+      "lastChecked": "2026-05-14T23:04:43.426Z"
     },
     {
       "name": "azure",
       "displayName": "Azure Services",
       "status": "outage",
       "description": "Major incident affecting multiple services",
-      "lastChecked": "2026-05-14T21:56:53.684Z"
+      "lastChecked": "2026-05-14T23:04:45.337Z"
     },
     {
       "name": "confluent",
       "displayName": "Confluent Cloud",
       "status": "unknown",
       "description": "Service Under Maintenance",
-      "lastChecked": "2026-05-14T21:56:52.283Z"
+      "lastChecked": "2026-05-14T23:04:43.611Z"
     },
     {
       "name": "nylas",
       "displayName": "Nylas",
       "status": "operational",
       "description": "No active incidents detected",
-      "lastChecked": "2026-05-14T21:56:52.424Z"
+      "lastChecked": "2026-05-14T23:04:43.710Z"
     },
     {
       "name": "sendgrid",
       "displayName": "SendGrid",
       "status": "operational",
       "description": "All Systems Operational",
-      "lastChecked": "2026-05-14T21:56:52.429Z"
+      "lastChecked": "2026-05-14T23:04:43.823Z"
     },
     {
       "name": "twilio",
       "displayName": "Twilio Communications",
       "status": "degraded",
       "description": "Partially Degraded Service",
-      "lastChecked": "2026-05-14T21:56:52.630Z"
+      "lastChecked": "2026-05-14T23:04:43.801Z"
     },
     {
       "name": "postmark",
       "displayName": "Postmark",
       "status": "operational",
       "description": "All systems operational",
-      "lastChecked": "2026-05-14T21:56:52.558Z"
+      "lastChecked": "2026-05-14T23:04:43.961Z"
     },
     {
       "name": "zohomail",
       "displayName": "Zoho Mail",
       "status": "operational",
       "description": "All systems operational",
-      "lastChecked": "2026-05-14T21:56:53.959Z"
+      "lastChecked": "2026-05-14T23:04:44.344Z"
     },
     {
       "name": "mailgun",
       "displayName": "Mailgun",
       "status": "operational",
       "description": "All Systems Operational",
-      "lastChecked": "2026-05-14T21:56:52.710Z"
+      "lastChecked": "2026-05-14T23:04:44.041Z"
     }
   ],
-  "lastUpdated": "2026-05-14T21:56:53.959Z",
+  "lastUpdated": "2026-05-14T23:04:45.337Z",
   "overallStatus": "outage"
 }
