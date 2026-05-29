@@ -5,65 +5,65 @@
       "displayName": "Cloudflare",
       "status": "degraded",
       "description": "Minor Service Outage",
-      "lastChecked": "2026-05-29T08:29:53.755Z"
+      "lastChecked": "2026-05-29T11:51:29.288Z"
     },
     {
       "name": "azure",
       "displayName": "Azure Services",
       "status": "degraded",
-      "description": "Issues detected: status, health, service, services, backup, container, cosmos, database, iot, kubernetes, monitor, netapp, site, synapse, databricks, storage, government, china, region, policy, resource, compute, vmware, center, functions, vm, quantum, spring, virtual, dedicated, large, deployment, bastion, firewall, network, peering, communications, dns, expressroute, front, internet, orbital, private, programmable, route, nat, hpc, managed, file, communication, fluid, ai, signalr, web, dev, red, sql, cache, analysis, data, stream, openai, video, machine, open, maps, sphere, digital, time, api, ad, active, attestation, confidential, ddos, information, key, devops, artifacts, boards, pipelines, repos, test, devtest, load, advisor, automanage, lighthouse, mobile, portal, blueprints, chaos, update, migrate, stack, arc, operator",
-      "lastChecked": "2026-05-29T08:29:55.097Z"
+      "description": "Issues detected: status, health, service, services, functions, virtual, backup, container, cosmos, database, iot, kubernetes, monitor, netapp, site, synapse, databricks, storage, sql, managed, government, china, region, cache, data, load, maps, policy, resource, compute, vmware, center, vm, quantum, spring, dedicated, large, deployment, bastion, firewall, network, peering, communications, dns, expressroute, front, internet, orbital, private, programmable, route, nat, hpc, file, communication, fluid, ai, signalr, web, dev, red, analysis, stream, openai, video, machine, open, sphere, digital, time, api, ad, active, attestation, confidential, ddos, information, key, devops, artifacts, boards, pipelines, repos, test, devtest, advisor, automanage, lighthouse, mobile, portal, blueprints, chaos, update, migrate, stack, arc, operator",
+      "lastChecked": "2026-05-29T11:51:30.547Z"
     },
     {
       "name": "confluent",
       "displayName": "Confluent Cloud",
       "status": "outage",
       "description": "Partial System Outage",
-      "lastChecked": "2026-05-29T08:29:53.829Z"
+      "lastChecked": "2026-05-29T11:51:29.390Z"
     },
     {
       "name": "nylas",
       "displayName": "Nylas",
       "status": "operational",
       "description": "No active incidents detected",
-      "lastChecked": "2026-05-29T08:29:53.827Z"
+      "lastChecked": "2026-05-29T11:51:29.388Z"
     },
     {
       "name": "sendgrid",
       "displayName": "SendGrid",
       "status": "operational",
       "description": "All Systems Operational",
-      "lastChecked": "2026-05-29T08:29:53.859Z"
+      "lastChecked": "2026-05-29T11:51:29.391Z"
     },
     {
       "name": "twilio",
       "displayName": "Twilio Communications",
       "status": "degraded",
       "description": "Partially Degraded Service",
-      "lastChecked": "2026-05-29T08:29:53.892Z"
+      "lastChecked": "2026-05-29T11:51:29.460Z"
     },
     {
       "name": "postmark",
       "displayName": "Postmark",
       "status": "operational",
       "description": "All systems operational",
-      "lastChecked": "2026-05-29T08:29:54.004Z"
+      "lastChecked": "2026-05-29T11:51:35.963Z"
     },
     {
       "name": "zohomail",
       "displayName": "Zoho Mail",
       "status": "operational",
       "description": "All systems operational",
-      "lastChecked": "2026-05-29T08:29:55.706Z"
+      "lastChecked": "2026-05-29T11:51:30.998Z"
     },
     {
       "name": "mailgun",
       "displayName": "Mailgun",
       "status": "operational",
       "description": "All Systems Operational",
-      "lastChecked": "2026-05-29T08:29:53.968Z"
+      "lastChecked": "2026-05-29T11:51:29.490Z"
     }
   ],
-  "lastUpdated": "2026-05-29T08:29:55.706Z",
+  "lastUpdated": "2026-05-29T11:51:35.963Z",
   "overallStatus": "outage"
 }
